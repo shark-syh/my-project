@@ -1,0 +1,14 @@
+<svg width="640" height="440" viewBox="0 0 640 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">测试2头像</title>
+  <desc id="desc">自动生成的头像。</desc>
+  <rect width="640" height="440" fill="#EEF3F6"/>
+  <rect x="68" y="60" width="504" height="320" rx="22" fill="#1A4A5C"/>
+  <rect x="110" y="106" width="420" height="230" rx="16" fill="#FBFCF8"/>
+  <path d="M169 165L229 222L169 279" stroke="#2E86A0" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M270 282H390" stroke="#C5443A" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="430" cy="168" r="22" fill="#E8983A"/>
+  <circle cx="476" cy="220" r="16" fill="#2E86A0"/>
+  <circle cx="428" cy="272" r="18" fill="#C5443A"/>
+  <path d="M430 168L476 220L428 272" stroke="#1A4A5C" stroke-width="7" stroke-linecap="round"/>
+  <rect x="209" y="78" width="238" height="16" rx="8" fill="#E8983A"/>
+</svg>

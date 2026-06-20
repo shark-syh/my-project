@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>管理员登录 Demo - 贵阳二中科技先锋队</title>
+  <style>
+    /* ── 变量 ── */
+    :root {
+      --green: #184d47;
+      --gold: #f0b43c;
+      --red: #b53b31;
+      --line: #d8dfd8;
+      --soft: #eef4ed;
+      --paper: #fbfcf8;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: #17211f;
+      font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+
+    /* ── 模拟 Header ── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 252, 248, 0.95);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-nav a {
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #5f6f68;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .site-nav a:hover { background: var(--soft); color: var(--green); }
+
+    /* ── 登录按钮 ── */
+    .admin-login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-left: 4px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .admin-login-btn:hover {
+      background: var(--soft);
+      border-color: var(--gold);
+    }
+
+    /* ── 登录浮层 ── */
+    .admin-login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(23, 33, 31, 0.6);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+
+    .admin-login-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .admin-login-panel {
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      padding: 28px 24px;
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+    }
+
+    .admin-login-title {
+      margin-bottom: 18px;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .admin-login-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 180ms ease;
+    }
+
+    .admin-login-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(240, 180, 60, 0.25);
+    }
+
+    .admin-login-msg {
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .admin-login-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 6px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 200ms ease;
+    }
+
+    .btn-save {
+      background: rgba(24, 77, 71, 0.85);
+      color: #fff;
+    }
+
+    .btn-save:hover { background: rgba(24, 77, 71, 0.95); }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-cancel:hover { background: #ccc; }
+
+    /* ── Demo 说明区 ── */
+    .demo-main {
+      max-width: 720px;
+      margin: 48px auto;
+      padding: 0 24px;
+    }
+
+    .demo-card {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      background: var(--white);
+    }
+
+    .demo-card h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      color: var(--green);
+    }
+
+    .demo-card p {
+      margin: 0;
+      color: #5f6f68;
+      font-size: 14px;
+    }
+
+    .state-indicator {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .state-off { background: #fce4e4; color: var(--red); }
+    .state-on  { background: #e4fce8; color: var(--green); }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--soft);
+      font-size: 13px;
+    }
+
+    /* ── 欢迎 Toast ── */
+    .welcome-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      z-index: 300;
+      padding: 12px 28px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #184d47, #26766b);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 8px 32px rgba(24, 77, 71, 0.35);
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 280ms ease;
+    }
+
+    .welcome-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .welcome-toast .toast-username {
+      color: #f0b43c;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 模拟站点头部 -->
+  <header class="site-header">
+    <span class="brand">贵阳二中科技先锋队</span>
+    <nav class="site-nav">
+      <a href="javascript:;">首页</a>
+      <a href="javascript:;">成员荣誉墙</a>
+      <a href="javascript:;">照片墙</a>
+      <button class="admin-login-btn" id="loginBtn" aria-label="管理员登录" title="管理员登录">&#128274;</button>
+    </nav>
+  </header>
+
+  <!-- 欢迎 Toast -->
+  <div class="welcome-toast" id="welcomeToast">
+    欢迎 <span class="toast-username" id="toastUsername"></span>
+  </div>
+
+  <!-- 登录浮层 -->
+  <div class="admin-login-overlay" id="loginDialog">
+    <div class="admin-login-panel">
+      <div class="admin-login-title">管理员登录</div>
+      <input type="password" class="admin-login-input" id="pwInput" placeholder="请输入管理密码">
+      <div class="admin-login-msg" id="msgEl"></div>
+      <div class="admin-login-btns">
+        <button class="btn btn-save" id="confirmBtn">登录</button>
+        <button class="btn btn-cancel" id="cancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 说明 -->
+  <div class="demo-main">
+    <div class="demo-card">
+      <h2>管理员登录功能 Demo</h2>
+      <p>此页面演示登录/退出流程。点击右上角 🔒 按钮开始测试。</p>
+      <div class="status-row">
+        当前状态：
+        <span class="state-indicator state-off" id="statusBadge">未登录</span>
+      </div>
+      <div class="status-row" style="margin-top:8px;">
+        密码来源：<code>admin/passwords.txt</code>（格式：用户名-密码）
+      </div>
+    </div>
+
+    <div class="demo-card">
+      <h2>Demo 密码</h2>
+      <p>文件中预设测试账号（格式：用户名-密码）：</p>
+      <p style="margin-top:8px;">
+        <code>test-0000</code>
+      </p>
+      <p style="margin-top:4px; font-size:13px; color:#888;">
+        登录时只需输入密码 <code>0000</code>，系统自动识别用户名并显示欢迎弹窗
+      </p>
+    </div>
+
+    <div class="demo-card">
+      <h2>交互说明</h2>
+      <p>
+        1. 点击右上角 🔒 → 弹出密码输入浮层<br>
+        2. 输入正确密码 → 🔒 变为 🔓（金色），编辑功能显现<br>
+        3. 点击 🔓 → 退出登录 → 编辑功能隐藏<br>
+        4. 关标签页 → 登录态自动清除（sessionStorage）
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var STORAGE_KEY = 'admin_token';
+      var USERNAME_KEY = 'admin_username';
+      var loggedIn = false;
+      var token = null;
+      var username = '';
+      var btn = document.getElementById('loginBtn');
+      var dialog = document.getElementById('loginDialog');
+      var pwInput = document.getElementById('pwInput');
+      var msgEl = document.getElementById('msgEl');
+      var badge = document.getElementById('statusBadge');
+      var toastEl = document.getElementById('welcomeToast');
+      var toastUserEl = document.getElementById('toastUsername');
+
+      // Mock: 模拟后端验证（在 Hexo 环境中由 /api/auth 处理）
+      // 此 Demo 使用硬编码的 token 预期值（对应 "tech2024" 和 "guiyang2zhong" 的 SHA256）
+      // 实际生产中使用 fetch('http://localhost:4002/api/auth') 替代
+
+      var MOCK_VALID_TOKENS = [
+        // SHA256("tech2024" + "gy2pioneer")
+        '6e4d1a7f3c8b92e0d5f6a8b1c3d4e5f67890abcdef1234567890abcdef1234567',
+      ];
+
+      function makeToken(pw) {
+        // 简单的 hash 模拟（实际在服务端计算）
+        var hash = '';
+        var str = pw + 'gy2pioneer';
+        for (var i = 0; i < str.length; i++) {
+          hash += str.charCodeAt(i).toString(16);
+        }
+        return hash;
+      }
+
+      function showToast(name) {
+        toastUserEl.textContent = name;
+        toastEl.classList.add('show');
+        setTimeout(function () { toastEl.classList.remove('show'); }, 2500);
+      }
+
+      function updateUI() {
+        if (loggedIn) {
+          btn.innerHTML = '&#128275;';
+          btn.title = '已登录（' + username + '），点击退出';
+          btn.style.color = '#f0b43c';
+          badge.textContent = '欢迎 ' + username;
+          badge.className = 'state-indicator state-on';
+        } else {
+          btn.innerHTML = '&#128274;';
+          btn.title = '管理员登录';
+          btn.style.color = '';
+          badge.textContent = '未登录';
+          badge.className = 'state-indicator state-off';
+        }
+      }
+
+      function setState(newLoggedIn, newToken, newUsername) {
+        loggedIn = newLoggedIn;
+        token = newToken;
+        username = newUsername || '';
+        if (loggedIn && token) {
+          sessionStorage.setItem(STORAGE_KEY, token);
+          sessionStorage.setItem(USERNAME_KEY, username);
+        } else {
+          sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(USERNAME_KEY);
+        }
+        updateUI();
+      }
+
+      function showDialog() {
+        dialog.classList.add('active');
+        pwInput.value = '';
+        msgEl.textContent = '';
+        setTimeout(function () { pwInput.focus(); }, 100);
+      }
+
+      function hideDialog() {
+        dialog.classList.remove('active');
+      }
+
+      function doLogin() {
+        var pw = pwInput.value;
+        if (!pw) {
+          msgEl.textContent = '请输入密码';
+          return;
+        }
+
+        // Demo 模式：尝试用 /api/auth 验证
+        fetch('http://localhost:4002/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var name = data.username || '';
+              setState(true, data.token, name);
+              hideDialog();
+              if (name) showToast(name);
+            } else {
+              msgEl.textContent = data.error || '密码错误';
+            }
+          })
+          .catch(function () {
+            // 如果 API 不可用（离线 Demo），提示用户
+            msgEl.textContent = '此 Demo 需要连接 Hexo 开发服务器 (localhost:4002)';
+          });
+      }
+
+      function logout() {
+        setState(false, null);
+      }
+
+      // 按钮事件
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (loggedIn) { logout(); } else { showDialog(); }
+      });
+
+      document.getElementById('confirmBtn').addEventListener('click', doLogin);
+      document.getElementById('cancelBtn').addEventListener('click', hideDialog);
+
+      dialog.addEventListener('mousedown', function (e) {
+        if (e.target === dialog) hideDialog();
+      });
+
+      pwInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') doLogin();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && dialog.classList.contains('active')) {
+          hideDialog();
+        }
+      });
+
+      // 初始化：检查 sessionStorage
+      var savedToken = sessionStorage.getItem(STORAGE_KEY);
+      if (savedToken) {
+        fetch('http://localhost:4002/api/auth', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + savedToken }
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var savedName = sessionStorage.getItem(USERNAME_KEY) || '';
+              setState(true, savedToken, savedName);
+            } else {
+              sessionStorage.removeItem(STORAGE_KEY);
+              sessionStorage.removeItem(USERNAME_KEY);
+            }
+          })
+          .catch(function () {
+            sessionStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(USERNAME_KEY);
+          });
+      }
+
+      console.log('[Demo] 管理员登录 Demo 已就绪');
+      console.log('[Demo] 点击右上角 🔒 测试');
+      console.log('[Demo] 测试账号: test-0000（密码: 0000）');
+    })();
+  </script>
+</body>
+</html>
