@@ -1,0 +1,28 @@
+<section class="page-hero">
+  <h1>竞赛时间线</h1>
+  <p class="sub">记录每一段探索的足迹，见证每一次成长的跃迁</p>
+</section>
+
+<section class="timeline-section">
+  <div class="timeline">
+    <% page.groups.forEach(function (group) { %>
+    <div class="timeline-group">
+      <div class="timeline-year"><span><%= group.year %></span></div>
+      <% group.items.forEach(function (ev) { %>
+      <div class="timeline-item dot-<%= ev.level %>">
+        <div class="timeline-dot"></div>
+        <div class="timeline-card">
+          <div class="card-date"><%= group.year %></div>
+          <h3><%= ev.title %></h3>
+          <div class="card-meta">
+            <span class="card-member"><%= ev.member %></span>
+            <span><%= ev.role %></span>
+            <span class="card-level <%= ev.level %>"><%= ev.label %></span>
+          </div>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% }); %>
+  </div>
+</section>

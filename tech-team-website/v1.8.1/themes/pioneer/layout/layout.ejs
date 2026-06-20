@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="<%= config.language || 'zh-CN' %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="<%= config.description %>">
+  <link rel="icon" type="image/svg+xml" href="<%- url_for('/assets/images/favicon.svg') %>">
+  <title><%= page.title ? page.title + ' | ' : '' %><%= config.title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&display=swap">
+  <%- css('css/site') %>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳转到主要内容</a>
+  <header class="site-header">
+    <a class="brand" href="<%- url_for('/') %>" aria-label="<%= config.title %>">
+      <img class="brand-mark" src="<%- url_for('/assets/images/logo.webp') %>" alt="" decoding="async">
+      <span class="brand-text">贵阳二中科技先锋队</span>
+    </a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="<%- url_for('/') %>">首页</a>
+      <a href="<%- url_for('/members/') %>">成员荣誉墙</a>
+      <a href="<%- url_for('/gallery/') %>">照片墙</a>
+      <a href="<%- url_for('/timeline/') %>">竞赛时间线</a>
+    </nav>
+  </header>
+
+  <%- js('js/admin-auth') %>
+  <%- js('js/particle-bg') %>
+
+  <main id="main-content">
+    <%- body %>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <strong>贵阳市第二中学科技先锋队</strong>
+      <span>在实践中探索，在荣誉墙上记录成长。</span>
+    </div>
+  </footer>
+
+  <button class="floating-btn floating-home" onclick="location.href='<%- url_for('/') %>'" aria-label="返回首页" title="返回首页">&#8962;</button>
+  <button class="floating-btn floating-top" id="backTop" aria-label="返回顶部" title="返回顶部">&uarr;</button>
+  <script>
+    (function() {
+      var btn = document.getElementById('backTop');
+      window.addEventListener('scroll', function() {
+        btn.classList.toggle('visible', window.scrollY > 400);
+      }, { passive: true });
+      btn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    })();
+  </script>
+</body>
+</html>
