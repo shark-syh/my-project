@@ -1,0 +1,13 @@
+<svg width="640" height="440" viewBox="0 0 640 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">沙榆航头像</title>
+  <desc id="desc">自动生成的头像。</desc>
+  <rect width="640" height="440" fill="#EDF0F4"/>
+  <rect x="50" y="60" width="540" height="320" rx="24" fill="#FBFCF8"/>
+  <path d="M70 290C160 230 260 210 390 255C460 278 500 280 560 250V374H70V290Z" fill="#5D7B93"/>
+  <path d="M80 265C170 185 300 170 430 218C480 233 520 232 560 220" stroke="#2C3E50" stroke-width="16" stroke-linecap="round"/>
+  <path d="180 168L480 105L350 228L312 340L268 252L180 168Z" fill="#2C3E50"/>
+  <path d="M480 105L296 236" stroke="#E09E3A" stroke-width="11" stroke-linecap="round"/>
+  <path d="M268 252L350 228" stroke="#FBFCF8" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="144" cy="119" r="28" fill="#E09E3A"/>
+  <path d="M120 344H520" stroke="#B5433B" stroke-width="9" stroke-linecap="round"/>
+</svg>
