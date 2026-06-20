@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成员编辑 Demo - 贵阳二中科技先锋队</title>
+  <style>
+    :root {
+      --green: #184d47;
+      --gold: #f0b43c;
+      --red: #b53b31;
+      --line: #d8dfd8;
+      --soft: #eef4ed;
+      --paper: #fbfcf8;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: #17211f;
+      font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.65;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 252, 248, 0.95);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .site-nav a {
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #5f6f68;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .site-nav a:hover { background: var(--soft); color: var(--green); }
+
+    /* ── 登录按钮 ── */
+    .admin-login-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      margin-left: 4px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .admin-login-btn:hover {
+      background: var(--soft);
+      border-color: var(--gold);
+    }
+
+    /* ── 登录浮层 ── */
+    .admin-login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(23, 33, 31, 0.6);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+
+    .admin-login-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .admin-login-panel {
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      padding: 28px 24px;
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+    }
+
+    .admin-login-title {
+      margin-bottom: 18px;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .admin-login-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 180ms ease;
+    }
+
+    .admin-login-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(240, 180, 60, 0.25);
+    }
+
+    .admin-login-msg {
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .admin-login-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 6px 18px;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 200ms ease;
+    }
+
+    .btn-save {
+      background: rgba(24, 77, 71, 0.85);
+      color: #fff;
+    }
+
+    .btn-save:hover { background: rgba(24, 77, 71, 0.95); }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-cancel:hover { background: #ccc; }
+
+    /* ── 欢迎 Toast ── */
+    .welcome-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-120px);
+      z-index: 300;
+      padding: 12px 28px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #184d47, #26766b);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 8px 32px rgba(24, 77, 71, 0.35);
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 280ms ease;
+    }
+
+    .welcome-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .welcome-toast .toast-username {
+      color: #f0b43c;
+    }
+
+    /* ── Demo 主内容 ── */
+    .demo-main {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    /* ── 区块标题行 ── */
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .section-heading h1 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--green);
+    }
+
+    /* ── 添加成员按钮 ── */
+    .add-member-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+
+    .add-member-btn.visible { display: inline-flex; }
+
+    .add-member-btn:hover {
+      background: var(--green);
+      color: #fff;
+    }
+
+    /* ── 成员卡片网格 ── */
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .member-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .member-grid { grid-template-columns: 1fr; }
+    }
+
+    .member-card {
+      position: relative;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--white);
+      transition: box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    .member-card:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .member-card.editable {
+      cursor: pointer;
+    }
+
+    .member-card.editable:hover {
+      border-color: var(--gold);
+      box-shadow: 0 4px 20px rgba(240, 180, 60, 0.2);
+    }
+
+    .member-card .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--soft);
+      margin-bottom: 12px;
+      object-fit: cover;
+    }
+
+    .member-card .role {
+      font-size: 12px;
+      color: #5f6f68;
+      margin-bottom: 4px;
+    }
+
+    .member-card h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      color: var(--green);
+    }
+
+    .member-card .summary {
+      font-size: 13px;
+      color: #5f6f68;
+      margin-bottom: 8px;
+    }
+
+    .member-card .honor-list {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
+      color: #5f6f68;
+    }
+
+    .member-card .honor-list li {
+      margin-bottom: 2px;
+    }
+
+    .member-card .quote {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: #888;
+      font-style: italic;
+    }
+
+    .member-card .card-index {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      font-size: 11px;
+      color: #ccc;
+      font-weight: 800;
+    }
+
+    /* ── 删除按钮 ── */
+    .delete-member-btn {
+      display: none;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: rgba(181, 59, 49, 0.1);
+      color: var(--red);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 180ms ease;
+  }
+
+    .delete-member-btn.visible { display: flex; align-items: center; justify-content: center; }
+
+    .delete-member-btn:hover {
+      background: rgba(181, 59, 49, 0.25);
+    }
+
+    /* ── 成员编辑浮层 ── */
+    .member-editor-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(23, 33, 31, 0.6);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease;
+    }
+
+    .member-editor-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .member-editor-panel {
+      width: 480px;
+      max-width: calc(100vw - 32px);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 28px 24px;
+      border-radius: 12px;
+      background: var(--white);
+      box-shadow: 0 24px 72px rgba(0, 0, 0, 0.3);
+    }
+
+    .member-editor-title {
+      margin-bottom: 18px;
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .form-group label .required {
+      color: var(--red);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 180ms ease;
+    }
+
+    .form-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(240, 180, 60, 0.25);
+    }
+
+    .form-textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 72px;
+      transition: border-color 180ms ease;
+    }
+
+    .form-textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(240, 180, 60, 0.25);
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .form-error {
+      min-height: 18px;
+      color: var(--red);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .form-btns {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* ── 状态指示器 ── */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 28px;
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--white);
+      border: 1px solid var(--line);
+    }
+
+    .state-indicator {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .state-off { background: #fce4e4; color: var(--red); }
+    .state-on  { background: #e4fce8; color: var(--green); }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--soft);
+      font-size: 13px;
+    }
+
+    /* ── 提示卡片 ── */
+    .info-card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background: var(--white);
+    }
+
+    .info-card h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: var(--green);
+    }
+
+    .info-card p {
+      margin: 4px 0;
+      color: #5f6f68;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="brand">贵阳二中科技先锋队</span>
+    <nav class="site-nav">
+      <a href="javascript:;">首页</a>
+      <a href="javascript:;">成员荣誉墙</a>
+      <a href="javascript:;">照片墙</a>
+      <button class="admin-login-btn" id="loginBtn" aria-label="管理员登录" title="管理员登录">&#128274;</button>
+    </nav>
+  </header>
+
+  <!-- 欢迎 Toast -->
+  <div class="welcome-toast" id="welcomeToast">
+    欢迎 <span class="toast-username" id="toastUsername"></span>
+  </div>
+
+  <!-- 登录浮层 -->
+  <div class="admin-login-overlay" id="loginDialog">
+    <div class="admin-login-panel">
+      <div class="admin-login-title">管理员登录</div>
+      <input type="password" class="admin-login-input" id="pwInput" placeholder="请输入管理密码">
+      <div class="admin-login-msg" id="msgEl"></div>
+      <div class="admin-login-btns">
+        <button class="btn btn-save" id="confirmBtn">登录</button>
+        <button class="btn btn-cancel" id="cancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成员编辑浮层 -->
+  <div class="member-editor-overlay" id="editorDialog">
+    <div class="member-editor-panel">
+      <div class="member-editor-title" id="editorTitle">添加成员</div>
+      <div class="form-error" id="formError"></div>
+
+      <div class="form-group">
+        <label><span class="required">*</span> 姓名</label>
+        <input type="text" class="form-input" id="fName" placeholder="例：张三">
+      </div>
+
+      <div class="form-group">
+        <label><span class="required">*</span> URL 标识（slug）</label>
+        <input type="text" class="form-input" id="fSlug" placeholder="例：zhang-san 或英文代号">
+        <div class="form-hint">小写字母、数字、连字符，用作个人页 URL 地址（如 /members/zhang-san/）</div>
+      </div>
+
+      <div class="form-group">
+        <label><span class="required">*</span> 所属社团</label>
+        <input type="text" class="form-input" id="fRole" placeholder="例：机器人与自动控制社">
+      </div>
+
+      <div class="form-group">
+        <label><span class="required">*</span> 年级</label>
+        <input type="text" class="form-input" id="fGrade" placeholder="例：2025 级">
+      </div>
+
+      <div class="form-group">
+        <label>头像路径</label>
+        <input type="text" class="form-input" id="fAvatar" placeholder="例：/assets/images/avatars/xxx.svg">
+        <div class="form-hint">留空则自动生成：/assets/images/avatars/{slug}.svg</div>
+      </div>
+
+      <div class="form-group">
+        <label><span class="required">*</span> 一句话简介</label>
+        <input type="text" class="form-input" id="fSummary" placeholder="例：专注于机器人结构设计与传感器调试">
+      </div>
+
+      <div class="form-group">
+        <label>荣誉列表</label>
+        <textarea class="form-textarea" id="fHonors" placeholder="每行一项荣誉&#10;例：&#10;2025 年贵州省青少年机器人竞赛一等奖&#10;2024 年贵阳市创客马拉松最佳工程奖"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>项目列表</label>
+        <textarea class="form-textarea" id="fProjects" placeholder="每行一个项目&#10;例：&#10;智能巡线机器人&#10;创客空间工具管理小车"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>格言</label>
+        <input type="text" class="form-input" id="fQuote" placeholder="例：让机械结构先跑起来，再让算法变得更聪明。">
+      </div>
+
+      <div class="form-btns">
+        <button class="btn btn-save" id="editorSaveBtn">保存</button>
+        <button class="btn btn-cancel" id="editorCancelBtn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="demo-main">
+    <div class="info-card">
+      <h2>成员编辑功能 Demo</h2>
+      <p>此页面演示成员的添加、编辑与删除。点击右上角 🔒 登录后测试。</p>
+      <p style="margin-top:6px;">Demo 密码：<code>0000</code>（对应账号 test）</p>
+    </div>
+
+    <div class="section-heading">
+      <h1>成员与荣誉</h1>
+      <button class="add-member-btn" id="addMemberBtn">＋ 添加成员</button>
+    </div>
+
+    <div class="member-grid" id="memberGrid">
+      <!-- JS 动态渲染 -->
+    </div>
+
+    <div class="status-row">
+      当前状态：
+      <span class="state-indicator state-off" id="statusBadge">未登录</span>
+      <span style="margin-left:8px;font-size:13px;color:#5f6f68;">
+        共 <strong id="memberCount">0</strong> 名成员
+      </span>
+    </div>
+
+    <div class="info-card" style="margin-top:16px;">
+      <h2>交互说明</h2>
+      <p>
+        1. 点击右上角 🔒 → 输入密码 <code>0000</code> 登录<br>
+        2. 登录后出现"＋ 添加成员"按钮和卡片上的 ✕ 删除按钮<br>
+        3. 点击"＋ 添加成员" → 填写表单 → 保存 → 卡片即时更新<br>
+        4. 登录后点击成员卡片 → 弹出编辑表单（预填数据）→ 修改后保存<br>
+        5. 点击卡片上 ✕ → 确认后删除该成员<br>
+        6. Demo 模式数据仅保存在内存中，刷新页面后恢复初始数据<br>
+        7. 关闭标签页 → 登录态自动清除（sessionStorage）
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // ══════════════════════════════════════════
+      //  预加载现有成员数据（硬编码副本）
+      // ══════════════════════════════════════════
+      var members = [
+        {
+          name: '林知远',
+          slug: 'lin-zhiyuan',
+          role: '机器人与自动控制社',
+          grade: '2025 级',
+          avatar: '/assets/images/avatars/lin-zhiyuan.svg',
+          summary: '专注机器人结构设计与传感器调试，喜欢把想法从草图推进到可运行的样机。',
+          honors: [
+            '2025 年贵州省青少年机器人竞赛一等奖',
+            '2024 年贵阳市创客马拉松最佳工程奖',
+            '2024 年校级科技节智能车挑战赛冠军'
+          ],
+          projects: ['智能巡线机器人', '创客空间工具管理小车'],
+          quote: '让机械结构先跑起来，再让算法变得更聪明。'
+        },
+        {
+          name: '陈亦航',
+          slug: 'chen-yihang',
+          role: '人工智能与程序设计社',
+          grade: '2024 级',
+          avatar: '/assets/images/avatars/chen-yihang.svg',
+          summary: '负责算法原型、前端交互与数据可视化，常把竞赛题拆成可复用的小工具。',
+          honors: [
+            '2025 年全国青少年信息学活动省级二等奖',
+            '2024 年贵阳市中学生编程挑战赛一等奖',
+            '2024 年校级算法训练营优秀队员'
+          ],
+          projects: ['校园设备预约原型系统', '科技节作品评分看板'],
+          quote: '好的程序不只会运行，还能让下一位同学继续理解它。'
+        },
+        {
+          name: '许清岚',
+          slug: 'xu-qinglan',
+          role: '航模与工程设计社',
+          grade: '2025 级',
+          avatar: '/assets/images/avatars/xu-qinglan.svg',
+          summary: '擅长 CAD 建模、材料测试与飞行调参，关注工程方案在真实环境里的稳定性。',
+          honors: [
+            '2025 年贵州省航空航天模型竞赛二等奖',
+            '2024 年贵阳市青少年科技创新大赛工程类一等奖',
+            '2024 年校级创意结构赛最佳设计奖'
+          ],
+          projects: ['轻量化固定翼航模', '可折叠展示架结构设计'],
+          quote: '每一次试飞都在告诉我们，设计还可以更可靠一点。'
+        }
+      ];
+
+      // ══════════════════════════════════════════
+      //  认证状态
+      // ══════════════════════════════════════════
+      var STORAGE_KEY = 'admin_token';
+      var USERNAME_KEY = 'admin_username';
+      var loggedIn = false;
+      var username = '';
+      var editingIndex = -1;  // -1 = 添加模式，>=0 = 编辑对应索引的成员
+
+      var btn = document.getElementById('loginBtn');
+      var dialog = document.getElementById('loginDialog');
+      var pwInput = document.getElementById('pwInput');
+      var msgEl = document.getElementById('msgEl');
+      var badge = document.getElementById('statusBadge');
+      var toastEl = document.getElementById('welcomeToast');
+      var toastUserEl = document.getElementById('toastUsername');
+      var addBtn = document.getElementById('addMemberBtn');
+      var editorDialog = document.getElementById('editorDialog');
+      var grid = document.getElementById('memberGrid');
+      var countEl = document.getElementById('memberCount');
+
+      function showToast(name) {
+        toastUserEl.textContent = name;
+        toastEl.classList.add('show');
+        setTimeout(function () { toastEl.classList.remove('show'); }, 2500);
+      }
+
+      function updateUI() {
+        if (loggedIn) {
+          btn.innerHTML = '&#128275;';
+          btn.title = '已登录（' + username + '），点击退出';
+          btn.style.color = '#f0b43c';
+          badge.textContent = '欢迎 ' + username;
+          badge.className = 'state-indicator state-on';
+          addBtn.classList.add('visible');
+        } else {
+          btn.innerHTML = '&#128274;';
+          btn.title = '管理员登录';
+          btn.style.color = '';
+          badge.textContent = '未登录';
+          badge.className = 'state-indicator state-off';
+          addBtn.classList.remove('visible');
+        }
+        renderCards();
+      }
+
+      function setState(newLoggedIn, newUsername) {
+        loggedIn = newLoggedIn;
+        username = newUsername || '';
+        if (loggedIn) {
+          sessionStorage.setItem(STORAGE_KEY, 'demo-token');
+          sessionStorage.setItem(USERNAME_KEY, username);
+        } else {
+          sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(USERNAME_KEY);
+        }
+        updateUI();
+      }
+
+      // ══════════════════════════════════════════
+      //  登录浮层
+      // ══════════════════════════════════════════
+      function showLoginDialog() {
+        dialog.classList.add('active');
+        pwInput.value = '';
+        msgEl.textContent = '';
+        setTimeout(function () { pwInput.focus(); }, 100);
+      }
+
+      function hideLoginDialog() {
+        dialog.classList.remove('active');
+      }
+
+      function doLogin() {
+        var pw = pwInput.value;
+        if (!pw) {
+          msgEl.textContent = '请输入密码';
+          return;
+        }
+
+        fetch('http://localhost:4002/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var name = data.username || '';
+              setState(true, name);
+              hideLoginDialog();
+              if (name) showToast(name);
+            } else {
+              msgEl.textContent = data.error || '密码错误';
+            }
+          })
+          .catch(function () {
+            msgEl.textContent = '需要连接 Hexo 开发服务器 (localhost:4002)';
+          });
+      }
+
+      function logout() {
+        setState(false, '');
+      }
+
+      // ══════════════════════════════════════════
+      //  成员卡片渲染
+      // ══════════════════════════════════════════
+      function renderCards() {
+        grid.innerHTML = '';
+        countEl.textContent = members.length;
+
+        members.forEach(function (member, index) {
+          var card = document.createElement('div');
+          card.className = 'member-card';
+
+          // 序号
+          var idx = document.createElement('span');
+          idx.className = 'card-index';
+          idx.textContent = '#' + (index + 1);
+          card.appendChild(idx);
+
+          // 删除按钮（登录后可见）
+          var delBtn = document.createElement('button');
+          delBtn.className = 'delete-member-btn';
+          if (loggedIn) delBtn.classList.add('visible');
+          delBtn.innerHTML = '&#10005;';
+          delBtn.title = '删除 ' + member.name;
+          delBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            deleteMember(index);
+          });
+          card.appendChild(delBtn);
+
+          // 头像
+          var avatar = document.createElement('img');
+          avatar.className = 'avatar';
+          avatar.src = member.avatar;
+          avatar.alt = member.name + '头像';
+          avatar.loading = 'lazy';
+          avatar.decoding = 'async';
+          card.appendChild(avatar);
+
+          // 角色 + 年级
+          var role = document.createElement('p');
+          role.className = 'role';
+          role.textContent = member.role + ' · ' + member.grade;
+          card.appendChild(role);
+
+          // 姓名
+          var h3 = document.createElement('h3');
+          h3.textContent = member.name;
+          card.appendChild(h3);
+
+          // 简介
+          var summary = document.createElement('p');
+          summary.className = 'summary';
+          summary.textContent = member.summary;
+          card.appendChild(summary);
+
+          // 荣誉
+          if (member.honors && member.honors.length) {
+            var ul = document.createElement('ul');
+            ul.className = 'honor-list';
+            member.honors.slice(0, 3).forEach(function (h) {
+              var li = document.createElement('li');
+              li.textContent = h;
+              ul.appendChild(li);
+            });
+            card.appendChild(ul);
+          }
+
+          // 格言
+          if (member.quote) {
+            var q = document.createElement('p');
+            q.className = 'quote';
+            q.textContent = '「' + member.quote + '」';
+            card.appendChild(q);
+          }
+
+          // 登录状态下卡片可点击编辑
+          if (loggedIn) {
+            card.classList.add('editable');
+            card.title = '点击编辑 ' + member.name;
+            card.addEventListener('click', function () {
+              openEditForm(index);
+            });
+          }
+
+          grid.appendChild(card);
+        });
+      }
+
+      // ══════════════════════════════════════════
+      //  添加 / 编辑成员逻辑
+      // ══════════════════════════════════════════
+      function openAddForm() {
+        if (!loggedIn) return;
+        editingIndex = -1;
+        document.getElementById('editorTitle').textContent = '添加成员';
+        document.getElementById('formError').textContent = '';
+        document.getElementById('fName').value = '';
+        document.getElementById('fSlug').value = '';
+        document.getElementById('fRole').value = '';
+        document.getElementById('fGrade').value = '';
+        document.getElementById('fAvatar').value = '';
+        document.getElementById('fSummary').value = '';
+        document.getElementById('fHonors').value = '';
+        document.getElementById('fProjects').value = '';
+        document.getElementById('fQuote').value = '';
+        editorDialog.classList.add('active');
+        setTimeout(function () { document.getElementById('fName').focus(); }, 100);
+      }
+
+      function openEditForm(index) {
+        if (!loggedIn) return;
+        var m = members[index];
+        if (!m) return;
+        editingIndex = index;
+        document.getElementById('editorTitle').textContent = '编辑成员';
+        document.getElementById('formError').textContent = '';
+        document.getElementById('fName').value = m.name || '';
+        document.getElementById('fSlug').value = m.slug || '';
+        document.getElementById('fRole').value = m.role || '';
+        document.getElementById('fGrade').value = m.grade || '';
+        document.getElementById('fAvatar').value = m.avatar || '';
+        document.getElementById('fSummary').value = m.summary || '';
+        document.getElementById('fHonors').value = (m.honors || []).join('\n');
+        document.getElementById('fProjects').value = (m.projects || []).join('\n');
+        document.getElementById('fQuote').value = m.quote || '';
+        editorDialog.classList.add('active');
+        setTimeout(function () { document.getElementById('fName').focus(); }, 100);
+      }
+
+      function hideEditor() {
+        editorDialog.classList.remove('active');
+      }
+
+      function saveMember() {
+        var name = document.getElementById('fName').value.trim();
+        var slug = document.getElementById('fSlug').value.trim();
+        var role = document.getElementById('fRole').value.trim();
+        var grade = document.getElementById('fGrade').value.trim();
+        var avatar = document.getElementById('fAvatar').value.trim();
+        var summary = document.getElementById('fSummary').value.trim();
+        var honorsRaw = document.getElementById('fHonors').value.trim();
+        var projectsRaw = document.getElementById('fProjects').value.trim();
+        var quote = document.getElementById('fQuote').value.trim();
+        var errEl = document.getElementById('formError');
+
+        // 校验
+        if (!name) { errEl.textContent = '请输入姓名'; return; }
+        if (!slug) { errEl.textContent = '请输入 URL 标识'; return; }
+        if (!/^[a-z0-9-]+$/.test(slug)) { errEl.textContent = 'URL 标识只能包含小写字母、数字和连字符'; return; }
+        if (!role) { errEl.textContent = '请输入所属社团'; return; }
+        if (!grade) { errEl.textContent = '请输入年级'; return; }
+        if (!summary) { errEl.textContent = '请输入一句话简介'; return; }
+
+        // 检查 slug 唯一性（编辑模式下排除自身）
+        var dup = members.some(function (m, i) { return m.slug === slug && i !== editingIndex; });
+        if (dup) { errEl.textContent = 'URL 标识 "' + slug + '" 已存在，请换一个'; return; }
+
+        if (!avatar) {
+          avatar = '/assets/images/avatars/' + slug + '.svg';
+        }
+
+        var honors = honorsRaw ? honorsRaw.split(/\r?\n/).filter(function (s) { return s.trim(); }) : [];
+        var projects = projectsRaw ? projectsRaw.split(/\r?\n/).filter(function (s) { return s.trim(); }) : [];
+
+        var memberData = {
+          name: name,
+          slug: slug,
+          role: role,
+          grade: grade,
+          avatar: avatar,
+          summary: summary,
+          honors: honors,
+          projects: projects,
+          quote: quote
+        };
+
+        if (editingIndex >= 0) {
+          members[editingIndex] = memberData;
+        } else {
+          members.push(memberData);
+        }
+        editingIndex = -1;
+        hideEditor();
+        renderCards();
+      }
+
+      // ══════════════════════════════════════════
+      //  删除成员
+      // ══════════════════════════════════════════
+      function deleteMember(index) {
+        var m = members[index];
+        if (!confirm('确定要删除成员「' + m.name + '」吗？\n此操作仅在当前 Demo 页中生效，刷新后恢复。')) return;
+        members.splice(index, 1);
+        renderCards();
+      }
+
+      // ══════════════════════════════════════════
+      //  事件绑定
+      // ══════════════════════════════════════════
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (loggedIn) { logout(); } else { showLoginDialog(); }
+      });
+
+      document.getElementById('confirmBtn').addEventListener('click', doLogin);
+      document.getElementById('cancelBtn').addEventListener('click', hideLoginDialog);
+
+      dialog.addEventListener('mousedown', function (e) {
+        if (e.target === dialog) hideLoginDialog();
+      });
+
+      pwInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') doLogin();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+          if (editorDialog.classList.contains('active')) {
+            hideEditor();
+          } else if (dialog.classList.contains('active')) {
+            hideLoginDialog();
+          }
+        }
+      });
+
+      addBtn.addEventListener('click', openAddForm);
+      document.getElementById('editorSaveBtn').addEventListener('click', saveMember);
+      document.getElementById('editorCancelBtn').addEventListener('click', hideEditor);
+
+      editorDialog.addEventListener('mousedown', function (e) {
+        if (e.target === editorDialog) hideEditor();
+      });
+
+      // ══════════════════════════════════════════
+      //  初始化
+      // ══════════════════════════════════════════
+      var savedToken = sessionStorage.getItem(STORAGE_KEY);
+      if (savedToken) {
+        fetch('http://localhost:4002/api/auth', {
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + savedToken }
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var savedName = sessionStorage.getItem(USERNAME_KEY) || '';
+              setState(true, savedName);
+            } else {
+              sessionStorage.removeItem(STORAGE_KEY);
+              sessionStorage.removeItem(USERNAME_KEY);
+              renderCards();
+            }
+          })
+          .catch(function () {
+            sessionStorage.removeItem(STORAGE_KEY);
+            sessionStorage.removeItem(USERNAME_KEY);
+            renderCards();
+          });
+      }
+
+      renderCards();
+
+      console.log('[Demo] 成员编辑 Demo 已就绪');
+      console.log('[Demo] 预加载 ' + members.length + ' 名成员');
+      console.log('[Demo] 点击右上角 🔒 登录后测试添加/编辑/删除功能');
+      console.log('[Demo] 测试账号: test-0000（密码: 0000）');
+    })();
+  </script>
+</body>
+</html>

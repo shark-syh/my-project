@@ -1,0 +1,30 @@
+<section class="profile-hero">
+  <img class="profile-avatar" src="<%- url_for(page.avatar) %>" alt="<%= page.name %>头像">
+  <div>
+    <a class="back-link" href="<%- url_for('/members/') %>">返回成员荣誉墙</a>
+    <p class="eyebrow"><%= page.role %> · <%= page.grade %></p>
+    <h1><%= page.name %></h1>
+    <p class="profile-summary"><%= page.summary %></p>
+  </div>
+</section>
+
+<section class="profile-layout">
+  <article class="profile-section">
+    <h2>代表荣誉</h2>
+    <ul class="honor-list">
+      <% (page.honors || []).forEach((honor) => { %>
+        <li><%= honor %></li>
+      <% }) %>
+    </ul>
+  </article>
+
+  <aside class="profile-section accent">
+    <h2>项目方向</h2>
+    <ul class="project-list">
+      <% (page.projects || []).forEach((project) => { %>
+        <li><%= project %></li>
+      <% }) %>
+    </ul>
+    <blockquote><%= page.quote %></blockquote>
+  </aside>
+</section>

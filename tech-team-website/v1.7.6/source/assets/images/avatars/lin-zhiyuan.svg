@@ -1,0 +1,15 @@
+<svg width="640" height="440" viewBox="0 0 640 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">林知远头像</title>
+  <desc id="desc">机器人与自动控制方向的示例头像。</desc>
+  <rect width="640" height="440" fill="#EAF3EF"/>
+  <rect x="58" y="56" width="524" height="328" rx="24" fill="#184D47"/>
+  <path d="M96 305L218 163L310 264L389 185L545 305V340H96V305Z" fill="#26766B"/>
+  <circle cx="444" cy="125" r="38" fill="#F0B43C"/>
+  <rect x="218" y="134" width="204" height="152" rx="28" fill="#FBFCF8"/>
+  <rect x="254" y="182" width="38" height="38" rx="12" fill="#184D47"/>
+  <rect x="348" y="182" width="38" height="38" rx="12" fill="#184D47"/>
+  <path d="M280 246H360" stroke="#B53B31" stroke-width="12" stroke-linecap="round"/>
+  <path d="M320 103V76" stroke="#FBFCF8" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="320" cy="62" r="15" fill="#F0B43C"/>
+  <path d="M191 202H218M422 202H449" stroke="#FBFCF8" stroke-width="16" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,70 @@
+<% const members = site.data.members || []; %>
+<section class="hero" id="top">
+  <div class="hero-copy">
+    <img class="hero-logo" src="<%- url_for('/assets/images/logo.webp') %>" alt="贵阳二中科技先锋队 Logo">
+    <p class="eyebrow">Guiyang No.2 High School</p>
+    <h1>贵阳二中科技先锋队</h1>
+    <p class="intro">
+      下属有数十个科技社团，一支由学生发起并壮大的队伍。在学校领导和老师的关怀下，长期开展与科技相关的各种科技实践活动。学校的创客空间优先向本社团的同学无偿开放，让同学们可以在科技的海洋里体验畅游，并有机会参加市级、省级、国家级乃至世界级的各种比赛。
+    </p>
+    <div class="hero-actions">
+      <a class="button primary" href="<%- url_for('/members/') %>">查看荣誉墙</a>
+      <a class="button secondary" href="<%- url_for('/gallery/') %>">浏览照片墙</a>
+      <a class="button secondary" href="#team">认识成员</a>
+    </div>
+  </div>
+  <div class="hero-panel" aria-label="队伍速览">
+    <div class="panel-title">科技实践版图</div>
+    <div class="stat-grid">
+      <div class="stat-item">
+        <span class="stat-number">数十</span>
+        <span class="stat-label">科技社团</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">开放</span>
+        <span class="stat-label">创客空间</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">多级</span>
+        <span class="stat-label">竞赛舞台</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">学生</span>
+        <span class="stat-label">自发成长</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="team">
+  <div class="section-heading">
+    <p class="eyebrow">Members & Honor Wall</p>
+    <h2>成员与荣誉</h2>
+    <p>聚是一团火，散是满天星。</p>
+  </div>
+  <div class="member-grid">
+    <% members.forEach((member) => { %>
+      <a class="member-card" href="<%- url_for('/members/' + member.slug + '/') %>">
+        <img class="member-avatar" src="<%- url_for(member.avatar) %>" alt="<%= member.name %>头像">
+        <div class="member-content">
+          <p class="member-role"><%= member.role %></p>
+          <h3><%= member.name %></h3>
+          <ul class="honor-list compact">
+            <% (member.honors || []).slice(0, 2).forEach((honor) => { %>
+              <li><%= honor %></li>
+            <% }) %>
+          </ul>
+          <span class="text-link">进入个人页</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="section band">
+  <div class="section-heading">
+    <p class="eyebrow">Maker Space</p>
+    <h2>从兴趣到作品</h2>
+    <p>技术拯救世界。 Tech saves the world.</p>
+  </div>
+</section>

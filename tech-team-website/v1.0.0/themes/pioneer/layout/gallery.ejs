@@ -1,0 +1,23 @@
+<% const photos = page.photos || []; %>
+<section class="page-hero gallery-hero">
+  <p class="eyebrow">Gallery</p>
+  <h1>照片墙</h1>
+  <p>记录科技先锋队在创客空间、竞赛现场、社团活动和作品展示中的片段。</p>
+</section>
+
+<section class="section gallery-section">
+  <% if (photos.length) { %>
+    <div class="gallery-wall" aria-label="科技先锋队照片墙">
+      <% photos.forEach((photo, index) => { %>
+        <figure class="gallery-photo">
+          <img src="<%- url_for(photo.src) %>" alt="科技先锋队照片 <%= index + 1 %>" loading="lazy">
+        </figure>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="empty-state">
+      <h2>还没有照片</h2>
+      <p>把图片放到 <code>source/assets/gallery/</code> 后重新生成，照片墙会自动展示。</p>
+    </div>
+  <% } %>
+</section>

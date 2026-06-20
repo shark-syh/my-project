@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="<%= config.language || 'zh-CN' %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="<%= config.description %>">
+  <title><%= page.title ? page.title + ' | ' : '' %><%= config.title %></title>
+  <%- css('css/site') %>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="<%- url_for('/') %>" aria-label="<%= config.title %>">
+      <img class="brand-mark" src="<%- url_for('/assets/images/logo.webp') %>" alt="">
+      <span class="brand-text">贵阳二中科技先锋队</span>
+    </a>
+    <nav class="site-nav" aria-label="主导航">
+      <a href="<%- url_for('/') %>">首页</a>
+      <a href="<%- url_for('/members/') %>">成员荣誉墙</a>
+      <a href="<%- url_for('/gallery/') %>">照片墙</a>
+    </nav>
+  </header>
+
+  <main>
+    <%- body %>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <strong>贵阳市第二中学科技先锋队</strong>
+      <span>在实践中探索，在荣誉墙上记录成长。</span>
+    </div>
+  </footer>
+</body>
+</html>

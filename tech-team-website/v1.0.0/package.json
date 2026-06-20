@@ -1,0 +1,21 @@
+{
+  "name": "gy2-tech-pioneer-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Guiyang No.2 High School Tech Pioneer Team official static website demo.",
+  "scripts": {
+    "clean": "hexo clean",
+    "build": "hexo generate",
+    "dev": "hexo server --port 4000"
+  },
+  "hexo": {
+    "version": "7.3.0"
+  },
+  "dependencies": {
+    "hexo": "^7.3.0",
+    "hexo-generator-index": "^4.0.0",
+    "hexo-renderer-ejs": "^2.0.0",
+    "hexo-renderer-marked": "^7.0.1",
+    "hexo-server": "^3.0.0"
+  }
+}
