@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞赛时间线预览 — 科技先锋队</title>
+    <style>
+        :root {
+            --ink: #17211f;
+            --muted: #5f6f68;
+            --line: #d8dfd8;
+            --paper: #fbfcf8;
+            --soft: #eef4ed;
+            --green: #184d47;
+            --green-2: #26766b;
+            --gold: #f0b43c;
+            --red: #b53b31;
+            --white: #ffffff;
+            --shadow: 0 18px 45px rgba(23, 33, 31, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Inter", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.65;
+            min-height: 100vh;
+        }
+
+        /* ===== 粒子画布 ===== */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header, main, footer { position: relative; z-index: 1; }
+
+        /* ===== 导航栏 ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 72px;
+            padding: 12px clamp(20px, 5vw, 64px);
+            border-bottom: 1px solid rgba(216, 223, 216, 0.9);
+            background: rgba(251, 252, 248, 0.85);
+            backdrop-filter: blur(16px);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 20px;
+        }
+        .site-nav { display: flex; gap: 8px; }
+        .site-nav a {
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .site-nav a:hover { background: var(--soft); color: var(--green); }
+        .site-nav a.active { color: var(--green); background: var(--soft); }
+
+        /* ===== Hero ===== */
+        .page-hero {
+            padding: clamp(48px, 8vw, 80px) clamp(20px, 6vw, 84px) clamp(32px, 5vw, 56px);
+            text-align: center;
+            background: rgba(238, 244, 237, 0.72);
+            border-bottom: 1px solid var(--line);
+        }
+        .page-hero h1 { font-size: clamp(36px, 6vw, 60px); letter-spacing: 0.02em; }
+        .page-hero .sub {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 17px;
+        }
+
+        /* ===== 时间线 ===== */
+        .timeline-section {
+            padding: clamp(40px, 6vw, 72px) clamp(20px, 6vw, 84px);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 0;
+        }
+
+        /* 中央竖线 */
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 100px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--line);
+        }
+
+        .timeline-group {
+            margin-bottom: 48px;
+        }
+
+        /* 年份标记 */
+        .timeline-year {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-left: 100px;
+        }
+        .timeline-year span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 32px;
+            border-radius: 16px;
+            background: var(--green);
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 2;
+        }
+        .timeline-year::before {
+            content: "";
+            position: absolute;
+            left: 99px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            z-index: 2;
+        }
+
+        /* 单条事件 */
+        .timeline-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-left: 100px;
+        }
+
+        /* 时间线节点 — 颜色继承级别 */
+        .timeline-dot {
+            position: absolute;
+            left: 95px;
+            top: 16px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #a0ada6;
+            border: 2px solid var(--white);
+            box-shadow: 0 0 0 2px #a0ada6;
+            z-index: 2;
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 0 5px rgba(160, 173, 166, 0.4);
+        }
+        /* 节点级别色 */
+        .timeline-item.dot-school .timeline-dot {
+            background: #8a9a90; box-shadow: 0 0 0 2px #8a9a90;
+        }
+        .timeline-item.dot-school:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(138, 154, 144, 0.4);
+        }
+        .timeline-item.dot-city .timeline-dot {
+            background: #c0712e; box-shadow: 0 0 0 2px #c0712e;
+        }
+        .timeline-item.dot-city:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(192, 113, 46, 0.4);
+        }
+        .timeline-item.dot-provincial .timeline-dot {
+            background: #6b5a9a; box-shadow: 0 0 0 2px #6b5a9a;
+        }
+        .timeline-item.dot-provincial:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(107, 90, 154, 0.4);
+        }
+        .timeline-item.dot-national .timeline-dot {
+            background: #cc9900; box-shadow: 0 0 0 2px #cc9900;
+        }
+        .timeline-item.dot-national:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(204, 153, 0, 0.45);
+        }
+        .timeline-item.dot-international .timeline-dot {
+            background: #c03030; box-shadow: 0 0 0 2px #c03030;
+        }
+        .timeline-item.dot-international:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(192, 48, 48, 0.4);
+        }
+
+        /* 卡片 */
+        .timeline-card {
+            flex: 1;
+            min-width: 0;
+            padding: 18px 22px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(23, 33, 31, 0.06);
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+        .timeline-item:hover .timeline-card {
+            transform: translateX(6px);
+            box-shadow: 0 12px 32px rgba(23, 33, 31, 0.1);
+        }
+
+        .timeline-card .card-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .timeline-card h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0 0 8px;
+            line-height: 1.3;
+        }
+        .timeline-card .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .timeline-card .card-member {
+            font-weight: 700;
+            color: var(--green-2);
+        }
+        .timeline-card .card-level {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+        }
+        /* 级别标签色 — 越高越"贵" */
+        .card-level.school {
+            background: rgba(95, 111, 104, 0.18);
+            color: #4a5a51;
+        }
+        .card-level.city {
+            background: rgba(192, 113, 46, 0.16);
+            color: #8b5018;
+        }
+        .card-level.provincial {
+            background: rgba(91, 74, 138, 0.15);
+            color: #3d3170;
+        }
+        .card-level.national {
+            background: rgba(184, 134, 11, 0.18);
+            color: #8b6914;
+        }
+        .card-level.international {
+            background: rgba(162, 32, 32, 0.13);
+            color: #8b1a1a;
+        }
+        .timeline-card .card-desc {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        /* ===== 页脚 ===== */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            padding: 28px clamp(20px, 6vw, 84px);
+            border-top: 1px solid var(--line);
+            background: #17211f;
+            color: rgba(255, 255, 255, 0.78);
+        }
+        .site-footer strong { color: var(--white); }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 720px) {
+            .timeline::before { left: 28px; }
+            .timeline-year { padding-left: 56px; }
+            .timeline-year::before { left: 23px; }
+            .timeline-item { padding-left: 56px; }
+            .timeline-dot { left: 22px; }
+            .timeline-card .card-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+        }
+        @media (max-width: 480px) {
+            .site-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .timeline-card h3 { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <header class="site-header">
+        <div class="brand">
+            <div class="brand-mark">技</div>
+            <span>贵阳二中科技先锋队</span>
+        </div>
+        <nav class="site-nav">
+            <a href="#">首页</a>
+            <a href="#">成员荣誉墙</a>
+            <a href="#">照片墙</a>
+            <a href="#" class="active">竞赛时间线</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <h1>竞赛时间线</h1>
+            <p class="sub">记录每一段探索的足迹，见证每一次成长的跃迁</p>
+        </section>
+
+        <section class="timeline-section">
+            <div class="timeline" id="timelineRoot"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div>
+            <strong>贵阳市第二中学科技先锋队</strong>
+            <span>在实践中探索，在荣誉墙上记录成长。</span>
+        </div>
+    </footer>
+
+    <!-- ═══ 自动同步：从成员数据生成时间线 ═══ -->
+    <script>
+    (function () {
+        // ── 模拟 source/_data/members.yml 的数据 ──
+        // 实际项目中由 Hexo Generator 读取 members.yml
+        const MEMBERS = [
+            {
+                name: "林知远",
+                role: "机器人与自动控制社",
+                honors: [
+                    "2025 年贵州省青少年机器人竞赛一等奖",
+                    "2024 年贵阳市创客马拉松最佳工程奖",
+                    "2024 年校级科技节智能车挑战赛冠军"
+                ]
+            },
+            {
+                name: "陈亦航",
+                role: "人工智能与程序设计社",
+                honors: [
+                    "2025 年全国青少年信息学活动省级二等奖",
+                    "2024 年贵阳市中学生编程挑战赛一等奖",
+                    "2024 年校级算法训练营优秀队员"
+                ]
+            },
+            {
+                name: "许清岚",
+                role: "航模与工程设计社",
+                honors: [
+                    "2025 年贵州省航空航天模型竞赛二等奖",
+                    "2024 年贵阳市青少年科技创新大赛工程类一等奖",
+                    "2024 年校级创意结构赛最佳设计奖"
+                ]
+            }
+        ];
+
+        // ── 级别关键词匹配 — 越高越优先 ──
+        const LEVEL_RULES = [
+            { level: "international",  label: "国际级", re: /国际|全球|世界/ },
+            { level: "national",      label: "国家级", re: /全国/ },
+            { level: "provincial",    label: "省级",   re: /省/ },
+            { level: "city",          label: "市级",   re: /市/ },
+            { level: "school",        label: "校级",   re: /校/ }
+        ];
+
+        function parseHonor(honorText) {
+            // 提取年份
+            const yearMatch = honorText.match(/^(\d{4})\s*年/);
+            const year = yearMatch ? parseInt(yearMatch[1]) : null;
+
+            // 提取级别
+            let level = "school";
+            let label = "校级";
+            for (const rule of LEVEL_RULES) {
+                if (rule.re.test(honorText)) {
+                    level = rule.level;
+                    label = rule.label;
+                    break; // 匹配到最高级别即停止
+                }
+            }
+
+            // 去掉年份前缀作为标题
+            const title = honorText.replace(/^\d{4}\s*年\s*/, "");
+
+            return { year, level, label, title };
+        }
+
+        function buildTimeline() {
+            const container = document.getElementById("timelineRoot");
+            if (!container) return;
+
+            // 收集所有荣誉，关联成员信息
+            const events = [];
+            MEMBERS.forEach(function (member) {
+                member.honors.forEach(function (honorText) {
+                    const parsed = parseHonor(honorText);
+                    events.push({
+                        year: parsed.year,
+                        level: parsed.level,
+                        label: parsed.label,
+                        title: parsed.title,
+                        member: member.name,
+                        role: member.role
+                    });
+                });
+            });
+
+            // 按年份降序，同年按级别排序
+            const LEVEL_ORDER = { international: 0, national: 1, provincial: 2, city: 3, school: 4 };
+            events.sort(function (a, b) {
+                if (a.year !== b.year) return b.year - a.year;
+                return (LEVEL_ORDER[a.level] || 5) - (LEVEL_ORDER[b.level] || 5);
+            });
+
+            // 按年份分组
+            const groups = {};
+            events.forEach(function (ev) {
+                const y = ev.year || "更早";
+                if (!groups[y]) groups[y] = [];
+                groups[y].push(ev);
+            });
+
+            // 生成 HTML
+            const years = Object.keys(groups).sort(function (a, b) {
+                if (a === "更早") return 1;
+                if (b === "更早") return -1;
+                return parseInt(b) - parseInt(a);
+            });
+
+            var html = "";
+            years.forEach(function (year) {
+                html += '<div class="timeline-group">';
+                html += '<div class="timeline-year"><span>' + year + '</span></div>';
+
+                groups[year].forEach(function (ev) {
+                    html += '<div class="timeline-item dot-' + ev.level + '">';
+                    html += '<div class="timeline-dot"></div>';
+                    html += '<div class="timeline-card">';
+                    html += '<div class="card-date">' + year + '</div>';
+                    html += '<h3>' + escapeHTML(ev.title) + '</h3>';
+                    html += '<div class="card-meta">';
+                    html += '<span class="card-member">' + escapeHTML(ev.member) + '</span>';
+                    html += '<span>' + escapeHTML(ev.role) + '</span>';
+                    html += '<span class="card-level ' + ev.level + '">' + ev.label + '</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        function escapeHTML(str) {
+            var div = document.createElement("div");
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        buildTimeline();
+    })();
+    </script>
+
+    <!-- ═══ 粒子系统（精简版） ═══ -->
+    <script>
+    (function () {
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const COLORS = {
+            particle: 'rgba(24, 77, 71, 0.18)',
+            particleNear: 'rgba(240, 180, 60, 0.28)',
+            line: 'rgba(24, 77, 71, ',
+            lineNear: 'rgba(240, 180, 60, ',
+        };
+
+        const CONFIG = { particleCount: 240, maxVelocity: 0.45, lineDistance: 120, mouseRadius: 180 };
+        let particles = [];
+        let mouse = { x: null, y: null, targetX: null, targetY: null, radius: CONFIG.mouseRadius };
+
+        function resize() {
+            canvas.width = window.innerWidth * window.devicePixelRatio;
+            canvas.height = window.innerHeight * window.devicePixelRatio;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            if (window.innerWidth < 768) { CONFIG.particleCount = 90; CONFIG.lineDistance = 80; mouse.radius = 140; }
+            else { CONFIG.particleCount = 240; CONFIG.lineDistance = 120; mouse.radius = CONFIG.mouseRadius; }
+        }
+
+        class Particle {
+            constructor(w, h) {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h;
+                this.vx = (Math.random() - 0.5) * CONFIG.maxVelocity;
+                this.vy = (Math.random() - 0.5) * CONFIG.maxVelocity;
+                this.radius = Math.random() * 1.6 + 0.8;
+                this.baseRadius = this.radius;
+                this.nearMouse = false;
+            }
+            update(w, h) {
+                if (this.x < 0 || this.x > w) this.vx *= -1;
+                if (this.y < 0 || this.y > h) this.vy *= -1;
+                this.x += this.vx; this.y += this.vy;
+                this.nearMouse = false;
+                if (mouse.x !== null) {
+                    const dx = this.x - mouse.x, dy = this.y - mouse.y, dist = Math.hypot(dx, dy);
+                    if (dist < mouse.radius) {
+                        this.nearMouse = true;
+                        const force = (mouse.radius - dist) / mouse.radius;
+                        this.x += (dx / dist) * force * 1.6;
+                        this.y += (dy / dist) * force * 1.6;
+                        this.radius = this.baseRadius + force * 1.2;
+                    } else if (this.radius > this.baseRadius) { this.radius -= 0.08; }
+                }
+            }
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = COLORS.particle;
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            const w = window.innerWidth, h = window.innerHeight;
+            for (let i = 0; i < CONFIG.particleCount; i++) particles.push(new Particle(w, h));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            if (mouse.targetX !== null) { mouse.x += (mouse.targetX - mouse.x) * 0.08; mouse.y += (mouse.targetY - mouse.y) * 0.08; }
+            const w = window.innerWidth, h = window.innerHeight;
+            particles.forEach(p => { p.update(w, h); p.draw(ctx); });
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p1 = particles[i], p2 = particles[j];
+                    const dx = p1.x - p2.x, dy = p1.y - p2.y, dist = Math.hypot(dx, dy);
+                    if (dist < CONFIG.lineDistance) {
+                        const nearMouse = p1.nearMouse || p2.nearMouse;
+                        const baseAlpha = (1 - dist / CONFIG.lineDistance) * (nearMouse ? 0.14 : 0.08);
+                        const colorSet = nearMouse ? COLORS.lineNear : COLORS.line;
+                        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `${colorSet}${baseAlpha.toFixed(3)})`;
+                        ctx.lineWidth = nearMouse ? 0.7 : 0.4;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { resize(); init(); });
+        window.addEventListener('mousemove', (e) => { mouse.targetX = e.clientX; mouse.targetY = e.clientY; });
+        window.addEventListener('mouseleave', () => { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+        window.addEventListener('touchmove', (e) => { if (e.touches.length > 0) { mouse.targetX = e.touches[0].clientX; mouse.targetY = e.touches[0].clientY; } }, { passive: true });
+        window.addEventListener('touchend', () => { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+
+        resize(); init(); animate();
+    })();
+    </script>
+</body>
+</html>
