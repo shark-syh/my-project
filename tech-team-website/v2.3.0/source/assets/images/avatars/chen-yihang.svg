@@ -1,0 +1,14 @@
+<svg width="640" height="440" viewBox="0 0 640 440" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">陈亦航头像</title>
+  <desc id="desc">人工智能与程序设计方向的示例头像。</desc>
+  <rect width="640" height="440" fill="#EEF4ED"/>
+  <rect x="64" y="58" width="512" height="324" rx="24" fill="#17211F"/>
+  <rect x="106" y="102" width="428" height="236" rx="14" fill="#FBFCF8"/>
+  <path d="M148 160L216 220L148 280" stroke="#26766B" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M265 286H400" stroke="#B53B31" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="424" cy="162" r="23" fill="#F0B43C"/>
+  <circle cx="470" cy="216" r="16" fill="#26766B"/>
+  <circle cx="420" cy="270" r="18" fill="#B53B31"/>
+  <path d="M424 162L470 216L420 270" stroke="#184D47" stroke-width="8" stroke-linecap="round"/>
+  <rect x="182" y="73" width="276" height="18" rx="9" fill="#F0B43C"/>
+</svg>

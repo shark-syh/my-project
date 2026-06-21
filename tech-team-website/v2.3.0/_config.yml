@@ -1,0 +1,30 @@
+title: 贵阳市第二中学科技先锋队
+subtitle: 科技实践与荣誉墙
+description: 贵阳二中科技先锋队官网，展示队伍简介、成员与荣誉。
+keywords: 贵阳二中,科技先锋队,科技社团,创客空间,荣誉墙
+author: Guiyang No.2 High School Tech Pioneer Team
+language: zh-CN
+timezone: Asia/Shanghai
+
+url: http://localhost:4002
+root: /
+permalink: :title/
+
+theme: pioneer
+
+source_dir: source
+public_dir: public
+tag_dir: tags
+archive_dir: archives
+category_dir: categories
+
+index_generator:
+  path: ''
+  per_page: 0
+  order_by: -date
+
+highlight:
+  enable: false
+
+prismjs:
+  enable: false
