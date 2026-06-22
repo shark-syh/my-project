@@ -1,0 +1,727 @@
+══════════════════════════════════════════
+  贵阳二中科技先锋队网站 · 更新记录
+══════════════════════════════════════════
+
+版本规则：主版本.次版本.修订号
+  主版本（大更新）：架构变更、新增核心页面类型
+  次版本（小更新）：新增功能模块、新增页面板块
+  修订号（补丁）  ：样式微调、bug 修复、文案更新
+
+
+
+
+
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.6.0 ｜ 2026-06-22 ｜ 整洁度 + 工程化 — 内嵌 JS 提取 + z-index 体系 + 压缩 + bat 修复
+──────────────────────────────────────────
+【小更新】
+- 内嵌 JS 提取：home.ejs stats 编辑器 → home-stats-editor.js
+              layout.ejs 滚动/菜单 → layout-core.js
+- CSS z-index 体系化：:root 中定义 10 个层级变量，替换 17 处硬编码
+- 安装 hexo-all-minifier，构建时自动压缩 HTML/CSS/JS/IMG
+  · HTML: 13-25% | CSS: ~21% | JS: 28-50% | SVG: 9-22%
+- 添加管理员.bat 绝对路径 → %~dp0 相对路径，换机器可用
+- README.md 更新：去掉 demo 标注，新增管理后台说明，端口修正 4000→4002
+- 波及文件：themes/pioneer/source/js/home-stats-editor.js（新建）
+            themes/pioneer/source/js/layout-core.js（新建）
+            themes/pioneer/layout/home.ejs
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+            admin/添加管理员.bat
+            package.json
+            README.md
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.4.1 ｜ 2026-06-21 ｜ 优化清理 — 残留文件 + 硬编码统计
+──────────────────────────────────────────
+【补丁】
+- 删除 3 个残留测试头像（test-log.svg / test-log2.svg / test-user.svg）
+- home-stats.yml 硬编码统计改为 null，让系统自动计算
+  · honors: "9" → null | projects: "6" → null
+- 波及文件：source/assets/images/avatars/test-*.svg（删除）
+            source/_data/home-stats.yml
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.4.3 ｜ 2026-06-22 ｜ P1 Bug 修复 — 审计日志 + CORS + alert 替换
+──────────────────────────────────────────
+【补丁】
+- 修复 timeline-api.js 中 3 处 audit.log() 参数签名错误（缺少 baseDir/username/req）
+- 为 timeline-api.js 添加 CORS 响应头，修复跨域访问
+- 10 处 alert() 对话框替换为 toast 通知（红色错误样式）
+- admin-auth.js 暴露 window.__admin.toast(msg, type) 和 escapeHTML 供全局使用
+- 波及文件：scripts/timeline-api.js
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/timeline-editor.js
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.5.0 ｜ 2026-06-22 ｜ 代码去重优化 — CSS overlay 统一 + body 解析提取 + hasOwnProperty 修复
+──────────────────────────────────────────
+【小更新】
+- CSS：提取 .overlay / .overlay--deep / .overlay-panel 基类，4 组浮层统一复用（删 ~80 行）
+- 后端：新建 scripts/parse-body.js，8 处 body 解析归一为 parseBody(req, limit, callback)
+- 安全：修正 auth-api.js 中 hasOwnProperty 调用方式，消除原型链绕过认证隐患
+- 安全：timeline-api.js 补充 BODY_LIMIT（原先无限制，有 DoS 风险）
+- timeline-editor-overlay 从 display:none/flex 改为 opacity 过渡，与其余浮层一致
+- 波及文件：themes/pioneer/source/css/site.css
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/layout/timeline.ejs
+            scripts/parse-body.js（新建）
+            scripts/members-api.js
+            scripts/timeline-api.js
+            scripts/home-stats-api.js
+            scripts/story-api.js
+            scripts/auth-api.js
+            CHANGELOG.txt
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.4.2 ｜ 2026-06-21 ｜ UI 快速优化 — 按钮 hover + 导航指示器 + 空状态
+──────────────────────────────────────────
+【补丁】
+- 按钮 hover 效果：primary 变深、secondary 边框加深、text-link 箭头右移
+- 导航栏当前页指示器：.site-nav a.active 绿色下划线
+- 成员卡片标题统一：h2 → h3
+- 空状态提示：成员页 / 成员详情 / 竞赛时间线均添加无数据时的友好提示
+- 波及文件：themes/pioneer/source/css/site.css
+            themes/pioneer/layout/member.ejs
+            themes/pioneer/layout/members.ejs
+            themes/pioneer/layout/timeline.ejs
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.4.0 ｜ 2026-06-21 ｜ 图片懒加载 — IntersectionObserver 渐进式加载
+──────────────────────────────────────────
+【小更新】
+- 照片墙使用 IntersectionObserver 懒加载，替代原生 loading="lazy"
+  · 图片距视口 200px 时预加载，加载完成后 opacity 淡入（0.5s）
+  · 透明 SVG 占位 + shimmer 动画，避免布局抖动
+  · MutationObserver 自动适配 SPA 导航后重新扫描
+  · 灯箱/故事编辑已适配 data-src 属性
+- gallery-lightbox.js 修复：3 处 img.src → img.dataset.src || img.src
+- demo/lazy-load-demo.html：30 张真实画廊图片测试
+- 波及文件：themes/pioneer/layout/gallery.ejs
+            themes/pioneer/source/js/lazy-load.js（新增）
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+──────────────────────────────────────────
+v2.3.0 ｜ 2026-06-21 ｜ 竞赛时间线 — 管理员手动添加比赛功能
+──────────────────────────────────────────
+【小更新】
+- 管理员可在时间线页面手动添加比赛记录，无需关联成员
+  · 输入年份（2000-2099）、级别（5 档下拉选择）、比赛名称
+  · 手动条目显示"手动添加"标签，独立于自动识别的成员荣誉
+  · 手动条目卡片右上角显示编辑/删除按钮（仅管理员可见）
+  · Hero 区域显示"+ 添加比赛"按钮（登录后可见）
+  · 编辑浮层：居中面板，年份/级别/标题三个字段，保存/取消
+  · 删除需确认
+- 数据持久化：手动条目存储在 source/_data/timeline-manual.yml
+- 新增 /api/timeline-manual API（GET/POST/PUT/DELETE）：
+  · GET 无需认证，POST/PUT/DELETE 需 Bearer token
+  · 操作记录自动写入审计日志（TIMELINE_ADD/EDIT/DELETE）
+- scripts/timeline.js 自动合并成员荣誉 + 手动条目，统一排序
+- 支持 SPA 导航：timeline-editor.js 全局加载，监听
+  admin-auth-change 事件自动重新初始化
+- Demo 文件：demo/timeline-editor-demo.html（含管理员模拟开关）
+- 波及文件：demo/timeline-editor-demo.html（新增）
+            source/_data/timeline-manual.yml（新增）
+            scripts/timeline-api.js（新增）
+            themes/pioneer/source/js/timeline-editor.js（新增）
+            scripts/timeline.js
+            themes/pioneer/layout/timeline.ejs
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+v2.2.1 ｜ 2026-06-21 ｜ 代码审计 — 死代码清理与 Bug 修复
+──────────────────────────────────────────
+【补丁】
+- story-api.js / home-stats-api.js：删除复制粘贴残留死代码
+  （body 长度检查在数据到达前同步执行，永远不会触发）
+- site.css：修复 .nav-open ~ .nav-toggle 选择器永不匹配
+  （DOM 顺序相反），仅保留 aria-expanded 选择器
+- gallery-lightbox.js：修复 CSS 选择器注入（文件名含引号
+  会导致 querySelector 语法错误）
+- avatar-generator.js：name 拼入 SVG 前进行 XML 转义
+  （<>&" 特殊字符）
+- audit-log.js：过滤日志参数中的换行符，防止日志伪造
+- admin-auth.js：删除未使用的 getUsername() / onChange() API
+- page-transition.js：删除未使用的 doc 返回值
+- site.css：删除未使用的 .prose 选择器
+- 波及文件：scripts/story-api.js
+            scripts/home-stats-api.js
+            scripts/audit-log.js
+            scripts/avatar-generator.js
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/js/page-transition.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+v2.1.1 ｜ 2026-06-21 ｜ 高优先级安全加固
+──────────────────────────────────────────
+【补丁】
+- Avatar URL 校验（纵深防御）：
+  · 新增 validateAvatar() 函数，拒绝含 " < > 的路径和外部 URL
+  · POST/PUT /api/members 在调用 ensureAvatar 前校验 avatar 字段
+- API 请求体大小限制：3 个文件 6 处添加上限检查，超限返回 413
+  · POST /api/auth（512B）、POST /api/story（16KB）
+  · POST/PUT /api/members（2KB）、PUT/DELETE /api/home-stats（512B）
+- _config.yml url 从 http://example.com 修正为 http://localhost:4002
+- home.ejs DELETE 统计重置请求补全 .catch() 错误处理
+- manage-passwords.js 添加 require.main === module 守卫，防止 Hexo 加载时误触发
+- 波及文件：scripts/members-api.js
+            scripts/story-api.js
+            scripts/home-stats-api.js
+            scripts/manage-passwords.js
+            themes/pioneer/layout/home.ejs
+            _config.yml
+
+──────────────────────────────────────────
+v2.2.0 ｜ 2026-06-21 ｜ UI/交互全面优化
+──────────────────────────────────────────
+【小更新】
+- 照片灯箱前后导航：
+  · 新增左右箭头按钮，支持前后切换照片
+  · 右上角显示 "X / Y" 索引指示器
+  · 键盘左右方向键切换、移动端触摸滑动切换
+  · 打开灯箱时自动收集照片列表、记录当前索引
+- 移动端汉堡菜单：
+  · 新增 .nav-toggle 三横线按钮（640px 以下显示）
+  · 点击展开下拉导航、点链接/点外部自动关闭
+  · 三条横线展开时变形为 X 图标
+  · 下拉菜单毛玻璃背景 + 全宽链接（≥44px 触摸目标）
+- SPA 页面加载进度条：
+  · 页面切换时顶部显示 2px 墨绿色进度条
+  · CSS animation 驱动（0%→88%），加载完成后瞬间 100%→消失
+  · 2 秒安全超时强制完成，浏览器前进后退也显示
+- 照片墙瀑布流布局：
+  · 纯 JS 最短列优先算法，替代 CSS columns
+  · 大屏 4 列、中屏 3 列、小屏 2 列、手机 1 列
+  · resize 200ms 防抖重新布局，SPA 导航后自动重排
+- 响应式窗口适配：
+  · 新增 384px 断点（iPhone SE）：隐藏品牌文字、统计条纵向、
+    按钮全宽、卡片 padding 缩小
+  · 安全区域适配：header padding-top + 浮动按钮 padding-bottom
+    使用 env(safe-area-inset-*)
+  · 触摸目标达标：导航链接 6px 14px → 10px 16px、
+    浮动按钮 40px → 44px
+  · 照片添加 aspect-ratio: auto 防止加载时布局跳动
+- 波及文件：themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/js/page-transition.js
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+v2.1.0 ｜ 2026-06-21 ｜ 综合安全加固 + 管理员系统完善
+──────────────────────────────────────────
+【小更新】
+- 项目综合优化 — 死代码清理 + 性能提升：
+  · 删除 gallery-lightbox.js.bak、page.ejs、index.ejs 等 5 个冗余文件
+  · 删除 site.css 中 .member-delete-btn / .hero-stat-divider 等无效 CSS
+  · 删除 home.ejs yearSpan 计算逻辑、particle-bg.js drawnPairs Set 等死代码
+  · 删除 shark.svg（未引用）、5 个空 .txt 故事文件
+  · 卡片 hover 过渡 500ms→280ms、导航栏 blur(20px)→blur(12px)
+  · particle-bg.js：devicePixelRatio 上限 2x、resize 200ms 防抖、标签页隐藏暂停 RAF
+  · page-transition.js：animationend 2s 超时保护
+  · package.json 版本号对齐、.gitignore 新增 *.bak
+- 管理员登录/退出后页面自动刷新状态：
+  · 修复 home.ejs 内联脚本 fetch() 缺少逗号导致脚本解析失败
+  · 修复 initStatsEditor() 重复绑定 + 退出后仍可触发编辑的安全漏洞
+  · 修复 page-transition.js popstate 缺少 admin-auth-change 分发
+  · 修复粒子背景遮挡首页标题文字
+  · 修复 gallery-lightbox.js 仅在 gallery.ejs 加载导致 SPA 进入后失效
+    移至 layout.ejs 全局加载
+- 管理员审计日志系统（新增）：
+  · 新增 scripts/audit-log.js，9 种操作类型自动记录到 admin/audit.log
+  · 记录含时间、用户名、IP、操作详情
+  · story-api.js 新增 POST /api/auth/logout 端点
+  · members-api / home-stats-api / admin-auth.js 埋点
+- 密码文件预哈希存储：
+  · admin/passwords.txt 格式从明文改为 用户名:哈希值
+  · auth-api.js 简化 loadPasswords()，直接读取预哈希值
+- 新增 scripts/manage-passwords.js 账号管理 CLI：
+  · add / import / list 三种命令，批量导入 + --reset 自动还原模板
+  · admin/new-users.txt 专用输入文件 + admin/添加管理员.bat 一键导入
+- 波及文件：scripts/audit-log.js（新增）
+            scripts/manage-passwords.js（新增）
+            scripts/auth-api.js
+            scripts/story-api.js
+            scripts/members-api.js
+            scripts/home-stats-api.js
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/js/page-transition.js
+            themes/pioneer/source/js/particle-bg.js
+            themes/pioneer/source/css/site.css
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/layout/home.ejs
+            themes/pioneer/layout/gallery.ejs
+            themes/pioneer/layout/page.ejs（删除）
+            themes/pioneer/layout/index.ejs（删除）
+            admin/passwords.txt
+            admin/new-users.txt（新增）
+            admin/添加管理员.bat（新增）
+            package.json
+            .gitignore
+
+──────────────────────────────────────────
+v2.0.1 ｜ 2026-06-20 ｜ SPA 切换后管理功能 + 灯箱失效修复 & 统计条精简
+──────────────────────────────────────────
+【补丁】
+- 修复照片灯箱在 SPA 页面切换后无法打开
+  根因：click 事件绑定在 .gallery-wall 元素上，SPA 替换 <main>
+  后旧 DOM 销毁 → 事件监听器失效
+  修复：改为 document 级事件委托（target.closest('.gallery-wall')）
+- 修复管理员添加/编辑/删除成员功能在 SPA 切换后全部失效
+  根因 1：members-editor.js 卡片 click 事件绑定在具体 DOM 元素上，
+  SPA 切换后失效（同灯箱问题）
+  根因 2：page-transition.js 分发的 admin-auth-change 事件缺少
+  detail 属性，members-editor 读取 e.detail.loggedIn 时报错
+  修复：卡片点击改为 document 级事件委托 + createAddBtn 支持 SPA
+  后重新挂载 + 事件补全 detail: { loggedIn: true }
+- 首页统计条移除"技术积淀"，剩余 3 项居中显示
+- 统计数字字号缩小：clamp(28px,4vw,40px) → clamp(24px,3.5vw,34px)
+- 波及文件：themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/page-transition.js
+            themes/pioneer/source/css/site.css
+            themes/pioneer/layout/home.ejs
+
+──────────────────────────────────────────
+v2.0.0 ｜ 2026-06-20 ｜ Apple 风格全站 UI 迁移
+──────────────────────────────────────────
+【大更新】
+- 全站 UI 迁移至 Apple 设计语言，基于 demo/project-showcase-demo.html
+  的设计系统进行全量刷新
+- CSS 设计 Token 全面更新：
+  色彩：--ink #1d1d1f / --ink-light #3a3a3c / --muted #86868b
+        --line #d2d2d7 / --paper #f5f5f7 / --soft #e8e8ed
+        --footer-bg #1d1d1f
+  圆角：--radius-sm 8px / --radius-md 12px / --radius-lg 16px / --radius-xl 20px
+  阴影：--shadow-sm/md/lg 改用极淡黑阴影（0.04-0.08 透明度）
+  缓动：--ease-spring cubic-bezier(0.22,0.6,0.36,1) 替代弹性缓动
+  内容宽度：--content-max-width 1080px
+  新增：--backdrop-saturate / --border-hairline
+  移除：--accent-bg / --shadow（零引用）
+- 导航栏 Apple 毛玻璃：高度 52px、背景 rgba(245,245,247,0.72)
+  + saturate(1.8) blur(20px)、hairline 0.5px 边框
+- 导航链接：字重 600、大小 13px、hover 无背景、活跃项无金色下划线
+- 品牌 logo：28px、字重 700、letter-spacing -0.2px
+- 英雄区：纯色背景 + 居中排版、h1 负 letter-spacing、按钮居中
+- 统计条：纯白 + 圆角卡片 + 居中、数字字重 700 深色、0.5px 分隔
+- 卡片体系：边框 0.5px、hover 取消 translateY(-4px) 仅阴影+边框变化
+  过渡时长 500ms、角色色值 --muted、标题字重 700
+- 全局排版：最大字重限制 700（800/900 降级）、大标题负 letter-spacing
+  .text-link / .back-link 字重 600
+- 页面过渡动画：退出 280ms、入场 480ms、translateY 幅度减小
+- 粒子背景：粒子数 160（移动端 50）、速度/力/连线参数全面调低
+- 灯箱遮罩：rgba(0,0,0,0.65)、图片圆角 --radius-md
+- 管理员面板：遮罩 rgba(0,0,0,0.5)、圆角 --radius-lg、字重 700
+- Google Fonts 字重范围：400..600 → 400..700
+- 波及文件：themes/pioneer/source/css/site.css
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/js/particle-bg.js
+            themes/pioneer/source/js/page-transition.js
+
+──────────────────────────────────────────
+v1.9.0 ｜ 2026-06-20 ｜ UI 全面优化 — 设计 Token + 页面切换动画
+──────────────────────────────────────────
+【小更新】
+- CSS 设计 Token 体系扩展：新增 16 个变量
+  （色彩 6 / 圆角 4 / 阴影 3 / 毛玻璃 3 / 缓动 2 / 间距 3），
+  所有硬编码色值/圆角/阴影替换为变量引用
+- 页面切换动画（SPA 风格）：
+  拦截站内链接 → 退出淡出上移 180ms → fetch 目标页 →
+  替换 <main> DOM → 入场淡入 320ms + 区块 stagger
+- 支持浏览器前进后退（popstate）、hover 预加载、
+  网络异常时自动回退整页导航
+- 导航栏优化：当前页金色下划线高亮 + aria-current +
+  滚动出现阴影
+- 统一卡片 hover 动效：240ms var(--ease-out) 过渡，
+  member-card / gallery-photo / timeline-card 行为一致
+- 区块入场 stagger 动画：fadeInUp 逐层滑入，
+  5 级延迟 50ms → 480ms，hero/section/卡片层级化
+- focus-visible 金色焦点环：无障碍键盘导航可见
+- profile-section.accent：纯色背景 → 半透明玻璃质感
+- gallery-lightbox.js：setTimeout 回退 scroll →
+  transitionend 事件精确控制
+- 宽屏内容居中：1200px max-width，section 间距统一变量
+- 波及文件：themes/pioneer/source/css/site.css
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/layout/home.ejs
+            themes/pioneer/layout/members.ejs
+            themes/pioneer/layout/gallery.ejs
+            themes/pioneer/layout/timeline.ejs
+            themes/pioneer/layout/member.ejs
+            themes/pioneer/source/js/page-transition.js（新增）
+            themes/pioneer/source/js/gallery-lightbox.js
+            demo/ui-optimization-demo.html
+
+──────────────────────────────────────────
+v1.8.1 ｜ 2026-06-20 ｜ 首页统计数据动态化
+──────────────────────────────────────────
+【补丁】
+- 首页统计面板重构：从右侧卡片改为全宽横排统计条，
+  4 项数据一字排开，竖线分隔，毛玻璃底
+- 数据从 members.yml 自动计算，新增成员/荣誉/项目后
+  重新构建即可自动更新
+- 管理员可手动覆盖数字（登录后点击数字编辑，双击重置为
+  自动值），覆盖数据存储于 source/_data/home-stats.yml
+- 编辑确认后即时更新 DOM，无需刷新页面
+- 新增 GET/PUT/DELETE /api/home-stats 端点
+- 话术科技化：「技术力量」「赛事战绩」「工程落地」「技术积淀」
+- 波及文件：themes/pioneer/layout/home.ejs
+            themes/pioneer/source/css/site.css
+            source/_data/home-stats.yml（新增）
+            scripts/home-stats-api.js（新增）
+
+──────────────────────────────────────────
+v1.8.0 ｜ 2026-06-20 ｜ 竞赛时间线页面
+──────────────────────────────────────────
+【小更新】
+- 新增 /timeline/ 竞赛时间线页面，自动从 members.yml
+  提取荣誉数据并按年份分组展示
+- 垂直时间线布局：左侧年份标记 + 墨绿主线 + 级别色节点
+  + 毛玻璃卡片，hover 节点放大 + 卡片微平移
+- 级别自动识别（关键词匹配）：校级（灰绿）、市级（青铜）、
+  省级（银蓝紫）、国家级（金色）、国际级（深红）
+- 时间线数据自动同步成员荣誉，members.yml 增删荣誉后
+  重新构建即可反映，无需手动维护
+- 导航栏新增"竞赛时间线"入口
+- 数据仅精确到年份（不编造月份），缺少年份的荣誉归入
+  「更早」分组
+- 波及文件：scripts/timeline.js（新增）
+            themes/pioneer/layout/timeline.ejs（新增）
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+
+──────────────────────────────────────────
+v1.7.1 ｜ 2026-06-20 ｜ 高优先级 Bug 修复
+──────────────────────────────────────────
+【补丁】
+- 修复 Inter 字体声明但未加载的问题（layout.ejs 添加
+  Google Fonts link）
+- 修复登录后缓存为空时点击成员卡片无响应（空缓存时
+  不拦截跳转，正常导航到个人页）
+- 修复网络错误时认证降级为假登录（catch 中清除
+  sessionStorage 并保持未登录态）
+- 移除 members-editor.js 中对 window.__admin 的冗余
+  setInterval 轮询（admin-auth.js 同步加载，执行时
+  __admin 一定存在）
+- 修复登录状态变化时 fetchMembers 重复调用两次（移除
+  onChange 回调，只保留 admin-auth-change DOM 事件）
+- 修复 writeMembers 中 content.replace(/''/g, '')
+  可能破坏 YAML 数据（改用 yaml.dump forceQuotes）
+- 将 js-yaml 添加为 package.json 直接依赖
+- 波及文件：themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/admin-auth.js
+            scripts/members-api.js
+            package.json
+
+
+──────────────────────────────────────────
+v1.7.2 ｜ 2026-06-20 ｜ 管理功能解除 localhost 限制
+──────────────────────────────────────────
+【补丁】
+- 移除 admin-auth.js 的 isLocalhost 门禁，登录按钮在
+  部署环境也可显示
+- 移除 members-editor.js 的 isLocalhost 门禁，添加/
+  编辑/删除成员功能在部署环境也可使用（需登录）
+- 移除 gallery-lightbox.js 中编辑按钮的 isLocalhost
+  条件，故事编辑功能在部署环境也可使用（需登录）
+- 后端 API 已有 Bearer token 认证保护，前端不需要
+  额外的 localhost 限制
+- 波及文件：themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/gallery-lightbox.js
+
+
+──────────────────────────────────────────
+v1.7.6 ｜ 2026-06-20 ｜ Favicon + 滚动性能优化
+──────────────────────────────────────────
+【补丁】
+- 新增 favicon.svg（墨绿底色 + 金色三角标记）
+- 返回顶部按钮的 scroll 监听器添加 { passive: true }
+- 波及文件：themes/pioneer/layout/layout.ejs
+            source/assets/images/favicon.svg（新增）
+
+
+──────────────────────────────────────────
+v1.7.5 ｜ 2026-06-20 ｜ 空格言引用块修复 + 清理重复目录
+──────────────────────────────────────────
+【补丁】
+- 修复成员个人页格言为空时显示空白 <blockquote>
+  （改用 <% if %> 条件渲染）
+- 删除 source/demo/ 重复目录（与根目录 demo/
+  完全重复，构建时不再生成无用文件）
+- 波及文件：themes/pioneer/layout/member.ejs
+            source/demo/（删除）
+
+
+──────────────────────────────────────────
+v1.7.4 ｜ 2026-06-20 ｜ 移除成员卡片上的删除按钮
+──────────────────────────────────────────
+【补丁】
+- 移除成员卡片右上角的 ✕ 删除按钮及相关逻辑
+- 删除成员功能仍可通过 DELETE /api/members/:slug 调用
+- 波及文件：themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/css/site.css
+
+
+──────────────────────────────────────────
+v1.7.3 ｜ 2026-06-20 ｜ 修复管理功能脚本加载顺序
+──────────────────────────────────────────
+【补丁】
+- 修复 admin-auth.js 在 members-editor.js 之后加载
+  导致添加/编辑/删除功能全部失效的 bug
+- 根因：layout.ejs 中 <%- body %>（含 members-editor.js）
+  在 <%- js('js/admin-auth') %> 之前渲染，window.__admin
+  不存在时 members-editor.js 直接退出
+- 将 admin-auth.js 和 particle-bg.js 移到 <main> 之前
+  加载，确保 page 脚本执行时 window.__admin 已就绪
+- 波及文件：themes/pioneer/layout/layout.ejs
+
+
+──────────────────────────────────────────
+v1.7.0 ｜ 2026-06-19 ｜ 成员编辑/删除 + 默认头像自动生成
+──────────────────────────────────────────
+【小更新】
+- 新增 PUT /api/members/:slug 更新成员端点，支持修改已
+  有成员的全部字段（需登录）
+- 登录后点击成员卡片弹出编辑表单（预填数据），修改后
+  PUT 保存并刷新页面；未登录时卡片正常跳转个人页
+- 登录后成员卡片右上角显示 ✕ 删除按钮，确认后调用
+  DELETE API 删除并刷新页面
+- 成员卡片在登录后显示金色 hover 边框 + cursor:pointer
+- 新增 scripts/avatar-generator.js：不指定头像时根据
+  slug 哈希自动生成抽象几何风格 SVG（4 配色 × 3 布局
+  × 随机微调，与现有手绘头像风格协调）
+- 照片简介/成员编辑/登录浮层遮罩关闭事件统一改为
+  mousedown，修复文字选中时浮层意外关闭的 bug
+- 切断姓名→slug 自动绑定，slug 改为完全手动输入
+- 波及文件：scripts/members-api.js
+            scripts/avatar-generator.js（新增）
+            themes/pioneer/source/js/members-editor.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/css/site.css
+            demo/admin-login-demo.html
+            source/demo/admin-login-demo.html
+
+
+──────────────────────────────────────────
+v1.6.0 ｜ 2026-06-19 ｜ 成员 UI 添加/删除功能
+──────────────────────────────────────────
+【小更新】
+- 新增成员管理 API：GET/POST/DELETE /api/members
+  POST 添加成员（需登录），DELETE 删除成员（需登录），
+  数据写入 source/_data/members.yml（js-yaml 读写）
+- 前端"＋ 添加成员"按钮（登录后可见），弹出表单浮层
+  字段对齐 members.yml：姓名/slug/社团/年级/头像/简介/
+  荣誉/项目/格言，slug 自动生成支持手动编辑
+- 表单校验：必填检查、slug 格式白名单、slug 去重
+- Demo 页面：demo/members-editor-demo.html
+  预加载 3 名现有成员数据，支持登录后添加/删除，双
+  击即可测试（需 localhost:4002 提供认证）
+- 新增文件：scripts/members-api.js
+            themes/pioneer/source/js/members-editor.js
+            demo/members-editor-demo.html
+            source/demo/members-editor-demo.html
+- 波及文件：themes/pioneer/layout/members.ejs
+            themes/pioneer/layout/home.ejs
+            themes/pioneer/source/css/site.css
+
+
+──────────────────────────────────────────
+v1.5.2 ｜ 2026-06-19 ｜ 浮动导航按钮
+──────────────────────────────────────────
+【补丁】
+- 右下角新增两个简约浮动按钮（毛玻璃圆形，40px）：
+  返回首页（⌂）：固定显示，点击跳转 /
+  返回顶部（↑）：滚动 400px 后才出现，平滑滚动至顶部
+- hover 微放大 + 阴影，颜色从 muted 切换为墨绿
+- 波及文件：themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+
+
+──────────────────────────────────────────
+v1.4.2 ｜ 2026-06-19 ｜ 性能与可访问性优化
+──────────────────────────────────────────
+【补丁】
+- 所有 <img> 标签添加 decoding="async"，后台解码不阻塞渲染
+- 粒子背景 O(n²)→接近 O(n)：空间哈希网格分桶，
+  240 粒子连线检测从 ~28,680 次/帧降至 ~1,800 次/帧
+- 新增 @media print 打印样式：
+  隐藏粒子画布/导航/页脚/按钮，白底黑字，避免卡片断裂
+- 新增"跳转到主要内容" skip-link（仅键盘聚焦可见）
+- 波及文件：themes/pioneer/layout/layout.ejs
+            themes/pioneer/layout/home.ejs
+            themes/pioneer/layout/gallery.ejs
+            themes/pioneer/layout/members.ejs
+            themes/pioneer/layout/member.ejs
+            themes/pioneer/source/js/particle-bg.js
+            themes/pioneer/source/css/site.css
+
+
+──────────────────────────────────────────
+v1.5.1 ｜ 2026-06-19 ｜ 认证优化：用户名识别 + 欢迎弹窗
+──────────────────────────────────────────
+【补丁】
+- 密码文件格式改为 用户名-密码（减号分隔），登录时只输
+  密码部分，系统自动识别用户名
+- 登录成功后显示欢迎 Toast 弹窗（"欢迎 xxx"），弹性
+  动画入场，2.5s 自动消失（墨绿渐变 + 金色用户名高亮）
+- admin-auth.js 新增 getUsername()、sessionStorage 持
+  久化用户名、按钮 tooltip 显示当前登录用户
+- 测试账号统一为 test-0000
+- 波及文件：scripts/auth-api.js
+            themes/pioneer/source/js/admin-auth.js
+            themes/pioneer/source/css/site.css
+            admin/passwords.txt
+            demo/admin-login-demo.html
+
+
+──────────────────────────────────────────
+v1.5.0 ｜ 2026-06-19 ｜ 管理员密码认证系统
+──────────────────────────────────────────
+【小更新】
+- 新增管理员密码认证系统，保护数据编辑功能
+- 密码文件：admin-passwords.txt（项目根目录，一行一个，任
+  一匹配即可登录，.gitignore 忽略，不提交到 git）
+- 认证 API：POST /api/auth 登录返回 token，
+  GET /api/auth 验证 token 有效性
+- 前端登录模块：header 右上角 🔒 按钮，点击弹出居中
+  密码浮层，sessionStorage 存储 token（仅当前标签页有效）
+- 照片故事编辑：从 isLocalhost 切换为需登录后才显示编辑按钮
+  POST /api/story 增加 Bearer token 校验
+- 登录态仅限当前标签页（sessionStorage），关标签页即退出
+- Demo 页面：demo/admin-login-demo.html（可独立测试）
+- 新增文件：scripts/auth-api.js
+            themes/pioneer/source/js/admin-auth.js
+            admin-passwords.txt
+            demo/admin-login-demo.html
+            source/demo/admin-login-demo.html
+- 波及文件：scripts/story-api.js
+            themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/layout/layout.ejs
+            themes/pioneer/source/css/site.css
+            .gitignore
+
+
+──────────────────────────────────────────
+v1.3.1 ｜ 2026-06-18 ｜ 灯箱二次点击修复
+──────────────────────────────────────────
+【补丁】
+- 修复关闭灯箱后无法再次点击照片的 bug
+  根因：遮罩层关闭后 opacity:0 仍占据全屏，拦截鼠标事件
+  修复：.gallery-overlay 添加 pointer-events:none，
+        .gallery-overlay.active 设 pointer-events:auto
+- 波及文件：themes/pioneer/source/css/site.css
+
+
+──────────────────────────────────────────
+v1.4.1 ｜ 2026-06-18 ｜ 回退动画 + 修复关闭抖动
+──────────────────────────────────────────
+【补丁】
+- 回退 FLIP 变形动画为简单 scale+opacity 方案
+- 修复关闭灯箱时大图抖动：
+  根因：unlockScroll() 在 CSS 过渡期间立即执行，滚动条提前回来
+  修复：close() 中先触发退场动画，320ms 后再调用 unlockScroll()
+- 波及文件：themes/pioneer/source/js/gallery-lightbox.js
+            themes/pioneer/source/css/site.css（恢复 scale transform）
+
+
+──────────────────────────────────────────
+v1.4.0 ｜ 2026-06-18 ｜ 灯箱"抽出式"变形动画
+──────────────────────────────────────────
+【小更新】
+- 灯箱动画改为 FLIP 变形效果：
+  打开 → 图片从缩略图位置/尺寸"膨胀"到屏幕中央
+  关闭 → 图片"收缩"回缩略图原位后消失
+  遮罩背景同步淡入淡出
+- 新增预加载：原图加载完毕后才展开，消除白闪
+- 新增动画锁：动画进行中忽略重复点击
+- 波及文件：themes/pioneer/source/js/gallery-lightbox.js（重写）
+            themes/pioneer/source/css/site.css（删除旧 scale transform）
+
+
+──────────────────────────────────────────
+v1.3.2 ｜ 2026-06-18 ｜ 灯箱打开时页面抖动修复
+──────────────────────────────────────────
+【补丁】
+- 修复打开/关闭灯箱时页面整体微小位移的 bug
+  根因：overflow:hidden 导致浏览器滚动条消失，视口宽度变化
+  修复：open() 时测量滚动条宽度，同步给 body 加 padding-right 补偿
+        close() 时移除补偿
+- 波及文件：themes/pioneer/source/js/gallery-lightbox.js
+
+
+──────────────────────────────────────────
+v1.3.0 ｜ 2026-06-18 ｜ 照片灯箱预览
+──────────────────────────────────────────
+【小更新】
+- 新增照片点击放大预览功能（Lightbox）
+  点击照片 → 半透明毛玻璃遮罩 + 居中大图
+  关闭方式：点击遮罩空白处 / 按 Esc / 点关闭按钮
+- 入场动画：遮罩淡入 + 图片 scale(0.92) → scale(1)
+  退场动画：反向，300ms cubic-bezier 缓动
+- 大图自适应视口（max 90vw × 85vh），竖图横图均不裁切
+- 打开后锁定页面滚动，关闭后恢复
+- 照片缩略图 hover 微放大 + cursor: zoom-in
+- 新增文件：themes/pioneer/source/js/gallery-lightbox.js
+- 波及文件：themes/pioneer/layout/gallery.ejs（引入脚本）
+            themes/pioneer/source/css/site.css（追加约 55 行样式）
+
+
+──────────────────────────────────────────
+v1.2.0 ｜ 2026-06-18 ｜ 照片墙背景透明化
+──────────────────────────────────────────
+【小更新】
+- 照片墙 hero 区和照片列表区背景改为半透明，粒子可见
+- 成员页/列表页 hero 背景同步改为半透明
+- 波及文件：themes/pioneer/source/css/site.css
+  · .page-hero / .profile-hero：背景 #eef4ed → rgba(238,244,237,0.72)
+  · .gallery-hero：背景 #f8f1e2 → rgba(248,241,226,0.68)
+  · .gallery-section：背景 #fff → rgba(255,255,255,0.55)
+
+
+──────────────────────────────────────────
+v1.1.0 ｜ 2026-06-18 ｜ 粒子交互背景
+──────────────────────────────────────────
+【小更新】
+- 新增全站粒子动态背景（Canvas 实现）
+  粒子数：桌面 240 个 / 移动 90 个
+- 配色适配项目墨绿+暖金色调
+- 鼠标悬停粒子推开 + 近距金色连线高亮
+- 触屏设备支持
+- 新增文件：themes/pioneer/source/js/particle-bg.js
+- 波及文件：themes/pioneer/layout/layout.ejs（引入脚本）
+            themes/pioneer/source/css/site.css（canvas 定位）
+
+
+──────────────────────────────────────────
+v1.0.0 ｜ 2026-06-17 ｜ 初始版本
+──────────────────────────────────────────
+【首次发布】
+- Hexo 7.3 + pioneer 主题
+- 首页（Hero + 成员卡片网格）
+- 成员荣誉墙列表页
+- 成员个人主页（荣誉 / 项目 / 格言）
+- 照片墙（自动扫描 source/assets/gallery/）
+- 成员数据源 source/_data/members.yml（3 名成员）
+- 自定义 Generator：members.js / gallery.js
+- 响应式布局（3 列 → 2 列 → 1 列）

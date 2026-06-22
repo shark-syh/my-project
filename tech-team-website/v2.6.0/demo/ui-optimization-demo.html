@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI 优化预览 — 科技先锋队</title>
+    <style>
+        /* ═══════════════════════════════════════
+           CSS Token 体系 — 优化后的完整变量
+           ═══════════════════════════════════════ */
+        :root {
+            /* 色彩 */
+            --ink: #17211f;
+            --ink-light: #33423e;
+            --muted: #5f6f68;
+            --line: #d8dfd8;
+            --paper: #fbfcf8;
+            --soft: #eef4ed;
+            --green: #184d47;
+            --green-hover: #133d38;
+            --green-2: #26766b;
+            --gold: #f0b43c;
+            --gold-hover: #d4a220;
+            --red: #b53b31;
+            --white: #ffffff;
+            --footer-bg: #17211f;
+            --accent-bg: rgba(240, 180, 60, 0.08);
+
+            /* 圆角 */
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            /* 阴影 */
+            --shadow-sm: 0 8px 24px rgba(23, 33, 31, 0.06);
+            --shadow-md: 0 12px 32px rgba(23, 33, 31, 0.09);
+            --shadow-lg: 0 18px 45px rgba(23, 33, 31, 0.12);
+
+            /* 毛玻璃 */
+            --blur-sm: 8px;
+            --blur-md: 12px;
+            --blur-lg: 16px;
+
+            /* 缓动 */
+            --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+            /* 间距 */
+            --section-padding-y: clamp(52px, 7vw, 90px);
+            --section-padding-x: clamp(20px, 6vw, 84px);
+            --content-max-width: 1200px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Inter", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.65;
+            min-height: 100vh;
+        }
+
+        /* ═══ 粒子画布 ═══ */
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        header, main, footer { position: relative; z-index: 1; }
+
+        /* ═══ 导航栏 — 优化：active 高亮 + 滚动阴影 ═══ */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 72px;
+            padding: 12px var(--section-padding-x);
+            border-bottom: 1px solid rgba(216, 223, 216, 0.9);
+            background: rgba(251, 252, 248, 0.88);
+            backdrop-filter: blur(var(--blur-lg));
+            transition: box-shadow 300ms var(--ease-out);
+        }
+        .site-header.scrolled {
+            box-shadow: 0 2px 16px rgba(23, 33, 31, 0.08);
+        }
+
+        .brand {
+            display: flex; align-items: center; gap: 10px;
+            font-weight: 800; font-size: 16px;
+        }
+        .brand-mark {
+            width: 44px; height: 44px; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--green), var(--green-2));
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-size: 20px;
+        }
+        .site-nav { display: flex; gap: 4px; }
+        .site-nav a {
+            position: relative;
+            padding: 8px 14px; border-radius: var(--radius-sm);
+            color: var(--muted); font-size: 14px; font-weight: 700;
+            text-decoration: none;
+            transition: color 220ms var(--ease-out), background 220ms var(--ease-out);
+        }
+        .site-nav a:hover {
+            background: var(--soft); color: var(--green);
+        }
+        /* 当前页高亮 */
+        .site-nav a.active {
+            color: var(--green); background: var(--soft);
+        }
+        .site-nav a.active::after {
+            content: "";
+            position: absolute;
+            bottom: 2px; left: 14px; right: 14px;
+            height: 2px; border-radius: 1px;
+            background: var(--gold);
+        }
+
+        /* ═══ focus-visible 无障碍 ═══ */
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--gold);
+            outline-offset: 2px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ═══════════════════════════════════════
+           页面切换动画 — 无遮罩淡入淡出
+           ═══════════════════════════════════════ */
+
+        /* 退出动画：当前页面 content 淡出 + 微上移 */
+        @keyframes pageExit {
+            0%   { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .page-content.exiting {
+            animation: pageExit 180ms var(--ease-out) both;
+            pointer-events: none;
+        }
+
+        /* 入场动画：新页面 content 淡入 + 从下向上滑入 */
+        @keyframes pageEnter {
+            0%   { opacity: 0; transform: translateY(14px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .page-content.entering {
+            animation: pageEnter 320ms var(--ease-out) both;
+        }
+
+        /* 页面内容容器 */
+        .page-content {
+            display: none;
+            opacity: 0;
+        }
+        .page-content.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ═══ 入场动画（区块级 stagger） ═══ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fadeInUp 560ms var(--ease-out) both;
+        }
+        .delay-1 { animation-delay: 50ms; }
+        .delay-2 { animation-delay: 150ms; }
+        .delay-3 { animation-delay: 250ms; }
+        .delay-4 { animation-delay: 350ms; }
+        .delay-5 { animation-delay: 450ms; }
+
+        /* ═══ Hero ═══ */
+        .hero {
+            display: flex; flex-direction: column; justify-content: center;
+            min-height: calc(100vh - 72px);
+            padding: clamp(48px, 8vw, 96px) var(--section-padding-x) clamp(40px, 6vw, 64px);
+            border-bottom: 1px solid var(--line);
+            background:
+                linear-gradient(135deg, rgba(24, 77, 71, 0.06), transparent 42%),
+                linear-gradient(315deg, rgba(240, 180, 60, 0.10), transparent 46%),
+                var(--paper);
+        }
+        .hero-copy { max-width: var(--content-max-width); margin: 0 auto; width: 100%; }
+        .hero-logo {
+            width: clamp(82px, 10vw, 118px); height: clamp(82px, 10vw, 118px);
+            margin-bottom: 24px; border-radius: var(--radius-lg); object-fit: cover;
+            background: linear-gradient(135deg, var(--green), var(--green-2));
+            display: flex; align-items: center; justify-content: center;
+            color: var(--white); font-size: 36px;
+        }
+        .eyebrow {
+            margin: 0 0 10px; color: var(--red);
+            font-size: 12px; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .hero h1 {
+            max-width: 860px; font-size: clamp(42px, 7vw, 86px);
+            line-height: 1.12; letter-spacing: -0.02em;
+        }
+        .intro {
+            max-width: 820px; margin: 22px 0 0;
+            color: var(--muted); font-size: 17px;
+        }
+        .hero-actions {
+            display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px;
+        }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 10px 18px;
+            border: 1px solid var(--green); border-radius: var(--radius-md);
+            font-weight: 800; text-decoration: none;
+            transition: all 220ms var(--ease-out);
+            cursor: pointer;
+        }
+        .button.primary {
+            background: var(--green); color: var(--white);
+        }
+        .button.primary:hover {
+            background: var(--green-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        .button.secondary {
+            background: rgba(255, 255, 255, 0.5); color: var(--green);
+        }
+        .button.secondary:hover {
+            background: rgba(255, 255, 255, 0.8); color: var(--green-hover);
+        }
+
+        /* ═══ 统计条 ═══ */
+        .hero-stats {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0;
+            margin-top: clamp(40px, 6vw, 64px);
+            max-width: var(--content-max-width);
+            width: 100%; align-self: center;
+            padding: clamp(20px, 4vw, 40px) clamp(24px, 4vw, 56px);
+            border: 1px solid rgba(216, 223, 216, 0.6);
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(var(--blur-md));
+            box-shadow: var(--shadow-sm);
+        }
+        .hero-stat {
+            flex: 1; text-align: center;
+            padding: 0 clamp(12px, 3vw, 32px);
+        }
+        .hero-stat-number {
+            display: block;
+            color: var(--green);
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 900; line-height: 1;
+            letter-spacing: -0.02em;
+        }
+        .hero-stat-label {
+            display: block; margin-top: 8px;
+            color: var(--muted); font-size: 13px;
+            font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .hero-stat-divider {
+            width: 1px; height: 40px;
+            background: var(--line); flex-shrink: 0;
+        }
+
+        /* ═══ 内容区 ═══ */
+        .section {
+            padding: var(--section-padding-y) var(--section-padding-x);
+            max-width: var(--content-max-width);
+            margin: 0 auto;
+            width: 100%;
+        }
+        .section-heading { margin-bottom: 28px; }
+        .section-heading h2 {
+            font-size: clamp(32px, 5vw, 54px);
+            line-height: 1.14; letter-spacing: -0.01em;
+        }
+
+        /* ═══ 卡片 — 统一阴影 + 动效 ═══ */
+        .member-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .member-card {
+            display: flex; flex-direction: column;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(var(--blur-sm));
+            box-shadow: var(--shadow-sm);
+            text-decoration: none; color: inherit;
+            transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out), border-color 240ms var(--ease-out);
+        }
+        .member-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(240, 180, 60, 0.3);
+        }
+        .member-avatar {
+            width: 100%; aspect-ratio: 16/11;
+            object-fit: cover; border-radius: var(--radius-md) var(--radius-md) 0 0;
+            background: linear-gradient(135deg, var(--soft), #dce8db);
+        }
+        .member-content {
+            padding: clamp(14px, 2vw, 20px);
+            display: flex; flex-direction: column; min-height: 0;
+        }
+        .member-role {
+            margin: 0 0 8px; color: var(--green-2);
+            font-size: 13px; font-weight: 900;
+        }
+        .member-content h3 { margin: 0 0 12px; font-size: 24px; }
+        .honor-list {
+            list-style: none; padding: 0; margin: 0 0 18px;
+            display: grid; gap: 8px; font-size: 14px;
+        }
+        .honor-list li {
+            padding-left: 18px; position: relative; color: var(--ink-light);
+        }
+        .honor-list li::before {
+            position: absolute; top: 0.72em; left: 0;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--gold); content: "";
+        }
+        .text-link {
+            margin-top: auto; color: var(--green); font-weight: 900;
+            text-decoration: none; transition: color 220ms var(--ease-out);
+        }
+        .text-link:hover { color: var(--green-hover); }
+        .text-link::after { margin-left: 6px; content: "→"; transition: margin-left 220ms var(--ease-out); display: inline-block; }
+        .text-link:hover::after { margin-left: 10px; }
+
+        /* ═══ 时间线卡片 ═══ */
+        .timeline-card {
+            flex: 1; min-width: 0;
+            padding: 18px 22px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(var(--blur-sm));
+            box-shadow: var(--shadow-sm);
+            transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out), border-color 240ms var(--ease-out);
+        }
+        .timeline-item:hover .timeline-card {
+            transform: translateX(6px);
+            box-shadow: var(--shadow-md);
+            border-left-color: rgba(240, 180, 60, 0.35);
+        }
+
+        /* ═══ 照片墙卡片 ═══ */
+        .gallery-wall {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .gallery-photo {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(var(--blur-sm));
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out), border-color 240ms var(--ease-out);
+        }
+        .gallery-photo:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(240, 180, 60, 0.3);
+        }
+        .gallery-photo img {
+            width: 100%; display: block;
+            transition: transform 240ms var(--ease-out);
+        }
+
+        /* ═══ 页脚 ═══ */
+        .site-footer {
+            position: relative; z-index: 1;
+            padding: 28px var(--section-padding-x);
+            border-top: 1px solid rgba(216, 223, 216, 0.3);
+            background: var(--footer-bg);
+            color: rgba(255, 255, 255, 0.78);
+        }
+        .site-footer strong { color: var(--white); }
+
+        /* ═══ 时间线样式（精简） ═══ */
+        .timeline-section {
+            padding: var(--section-padding-y) var(--section-padding-x);
+            max-width: var(--content-max-width);
+            margin: 0 auto;
+        }
+        .timeline { position: relative; }
+        .timeline::before {
+            content: ""; position: absolute;
+            left: 100px; top: 0; bottom: 0;
+            width: 2px; background: var(--line);
+        }
+        .timeline-group { margin-bottom: 48px; }
+        .timeline-year {
+            position: relative; display: flex; align-items: center;
+            margin-bottom: 24px; padding-left: 100px;
+        }
+        .timeline-year span {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 64px; height: 32px; border-radius: var(--radius-xl);
+            background: var(--green); color: var(--white);
+            font-size: 14px; font-weight: 900; letter-spacing: 0.05em;
+            position: relative; z-index: 2;
+        }
+        .timeline-year::before {
+            content: ""; position: absolute; left: 99px; top: 50%;
+            transform: translateY(-50%); width: 10px; height: 10px;
+            border-radius: 50%; background: var(--green); z-index: 2;
+        }
+        .timeline-item {
+            position: relative; display: flex; align-items: flex-start;
+            margin-bottom: 20px; padding-left: 100px;
+        }
+        .timeline-dot {
+            position: absolute; left: 95px; top: 16px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: #a0ada6;
+            border: 2px solid var(--white);
+            box-shadow: 0 0 0 2px #a0ada6;
+            z-index: 2;
+            transition: transform 240ms var(--ease-out), box-shadow 240ms var(--ease-out);
+        }
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.5);
+            box-shadow: 0 0 0 5px rgba(160, 173, 166, 0.4);
+        }
+
+        /* ═══ 徽章标签 ═══ */
+        .card-level {
+            display: inline-block; padding: 2px 10px;
+            border-radius: var(--radius-xl);
+            font-size: 11px; font-weight: 800; letter-spacing: 0.03em;
+        }
+
+        /* ═══ 响应式 ═══ */
+        @media (max-width: 920px) {
+            .member-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .gallery-wall { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 720px) {
+            .timeline::before { left: 28px; }
+            .timeline-year { padding-left: 56px; }
+            .timeline-year::before { left: 23px; }
+            .timeline-item { padding-left: 56px; }
+            .timeline-dot { left: 22px; }
+        }
+        @media (max-width: 640px) {
+            .site-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .hero h1 { font-size: 40px; }
+            .member-grid { grid-template-columns: 1fr; }
+            .gallery-wall { grid-template-columns: 1fr; gap: 10px; }
+            .hero-stats { flex-wrap: wrap; gap: 0; }
+            .hero-stat { flex: 1 1 40%; padding: 12px clamp(8px, 2vw, 16px); }
+            .hero-stat-divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- ═══ 导航栏 — active + 滚动阴影 ═══ -->
+    <header class="site-header" id="siteHeader">
+        <div class="brand">
+            <div class="brand-mark">技</div>
+            <span>贵阳二中科技先锋队</span>
+        </div>
+        <nav class="site-nav" aria-label="主导航">
+            <a href="/" class="active" aria-current="page" data-page="home">首页</a>
+            <a href="/members/" data-page="members">成员荣誉墙</a>
+            <a href="/gallery/" data-page="gallery">照片墙</a>
+            <a href="/timeline/" data-page="timeline">竞赛时间线</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- ═══ 首页 ═══ -->
+        <div class="page-content active" id="page-home">
+            <section class="hero">
+                <div class="hero-copy animate-in delay-1">
+                    <div class="hero-logo">⚙</div>
+                    <p class="eyebrow">Guiyang No.2 High School</p>
+                    <h1>贵阳二中科技先锋队</h1>
+                    <p class="intro">
+                        下属有数十个科技社团，一支由学生发起并壮大的队伍。在学校领导和老师的关怀下，长期开展与科技相关的各种科技实践活动。
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button primary" href="/members/" data-page="members">查看荣誉墙</a>
+                        <a class="button secondary" href="/gallery/" data-page="gallery">浏览照片墙</a>
+                        <a class="button secondary" href="#team">认识成员</a>
+                    </div>
+                </div>
+                <div class="hero-stats animate-in delay-3" aria-label="队伍速览">
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">3</span>
+                        <span class="hero-stat-label">技术力量</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">9</span>
+                        <span class="hero-stat-label">赛事战绩</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">6</span>
+                        <span class="hero-stat-label">工程落地</span>
+                    </div>
+                    <div class="hero-stat-divider"></div>
+                    <div class="hero-stat">
+                        <span class="hero-stat-number">2024–2025</span>
+                        <span class="hero-stat-label">技术积淀</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section" id="team">
+                <div class="section-heading animate-in delay-1">
+                    <p class="eyebrow">Members & Honor Wall</p>
+                    <h2>成员与荣誉</h2>
+                    <p style="color: var(--muted);">聚是一团火，散是满天星。</p>
+                </div>
+                <div class="member-grid">
+                    <a class="member-card animate-in delay-2" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #26766b, #3d8a7e); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">🤖</div>
+                        <div class="member-content">
+                            <p class="member-role">机器人与自动控制社</p>
+                            <h3>林知远</h3>
+                            <ul class="honor-list">
+                                <li>2025 年贵州省青少年机器人竞赛一等奖</li>
+                                <li>2024 年贵阳市创客马拉松最佳工程奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                    <a class="member-card animate-in delay-3" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #184d47, #2a6b5e); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">💻</div>
+                        <div class="member-content">
+                            <p class="member-role">人工智能与程序设计社</p>
+                            <h3>陈亦航</h3>
+                            <ul class="honor-list">
+                                <li>2025 年全国青少年信息学活动省级二等奖</li>
+                                <li>2024 年贵阳市中学生编程挑战赛一等奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                    <a class="member-card animate-in delay-4" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #3a7050, #4d8a62); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">🛩</div>
+                        <div class="member-content">
+                            <p class="member-role">航模与工程设计社</p>
+                            <h3>许清岚</h3>
+                            <ul class="honor-list">
+                                <li>2025 年贵州省航空航天模型竞赛二等奖</li>
+                                <li>2024 年贵阳市青少年科技创新大赛一等奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <!-- ═══ 成员荣誉墙页 ═══ -->
+        <div class="page-content" id="page-members">
+            <section class="hero" style="min-height:auto;padding:clamp(40px,6vw,64px) var(--section-padding-x) clamp(32px,4vw,48px);">
+                <div class="hero-copy animate-in delay-1">
+                    <p class="eyebrow">Members & Honor Wall</p>
+                    <h1>成员荣誉墙</h1>
+                    <p class="intro">聚是一团火，散是满天星。每一位成员都在用自己的努力书写科技的故事。</p>
+                </div>
+            </section>
+            <section class="section">
+                <div class="member-grid">
+                    <a class="member-card animate-in delay-2" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #26766b, #3d8a7e); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">🤖</div>
+                        <div class="member-content">
+                            <p class="member-role">机器人与自动控制社</p>
+                            <h3>林知远</h3>
+                            <ul class="honor-list">
+                                <li>2025 年贵州省青少年机器人竞赛一等奖</li>
+                                <li>2024 年贵阳市创客马拉松最佳工程奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                    <a class="member-card animate-in delay-3" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #184d47, #2a6b5e); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">💻</div>
+                        <div class="member-content">
+                            <p class="member-role">人工智能与程序设计社</p>
+                            <h3>陈亦航</h3>
+                            <ul class="honor-list">
+                                <li>2025 年全国青少年信息学活动省级二等奖</li>
+                                <li>2024 年贵阳市中学生编程挑战赛一等奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                    <a class="member-card animate-in delay-4" href="#">
+                        <div class="member-avatar" style="background: linear-gradient(135deg, #3a7050, #4d8a62); display:flex;align-items:center;justify-content:center;color:white;font-size:48px;">🛩</div>
+                        <div class="member-content">
+                            <p class="member-role">航模与工程设计社</p>
+                            <h3>许清岚</h3>
+                            <ul class="honor-list">
+                                <li>2025 年贵州省航空航天模型竞赛二等奖</li>
+                                <li>2024 年贵阳市青少年科技创新大赛一等奖</li>
+                            </ul>
+                            <span class="text-link">进入个人页</span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <!-- ═══ 照片墙页 ═══ -->
+        <div class="page-content" id="page-gallery">
+            <section class="hero" style="min-height:auto;padding:clamp(40px,6vw,64px) var(--section-padding-x) clamp(32px,4vw,48px);">
+                <div class="hero-copy animate-in delay-1">
+                    <p class="eyebrow">Photo Gallery</p>
+                    <h1>照片墙</h1>
+                    <p class="intro">用镜头记录每一次探索、每一场比赛、每一个闪耀的瞬间。</p>
+                </div>
+            </section>
+            <section class="section">
+                <div class="gallery-wall">
+                    <div class="gallery-photo animate-in delay-2">
+                        <div style="aspect-ratio:1;background:linear-gradient(135deg,#eef4ed,#dce8db);display:flex;align-items:center;justify-content:center;color:var(--green-2);font-size:32px;">📷</div>
+                    </div>
+                    <div class="gallery-photo animate-in delay-3">
+                        <div style="aspect-ratio:1;background:linear-gradient(135deg,#eef4ed,#dce8db);display:flex;align-items:center;justify-content:center;color:var(--green-2);font-size:32px;">📷</div>
+                    </div>
+                    <div class="gallery-photo animate-in delay-4">
+                        <div style="aspect-ratio:1;background:linear-gradient(135deg,#eef4ed,#dce8db);display:flex;align-items:center;justify-content:center;color:var(--green-2);font-size:32px;">📷</div>
+                    </div>
+                    <div class="gallery-photo animate-in delay-5">
+                        <div style="aspect-ratio:1;background:linear-gradient(135deg,#eef4ed,#dce8db);display:flex;align-items:center;justify-content:center;color:var(--green-2);font-size:32px;">📷</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ═══ 竞赛时间线页 ═══ -->
+        <div class="page-content" id="page-timeline">
+            <section class="hero" style="min-height:auto;padding:clamp(40px,6vw,64px) var(--section-padding-x) clamp(32px,4vw,48px);">
+                <div class="hero-copy animate-in delay-1">
+                    <p class="eyebrow">Competition Timeline</p>
+                    <h1>竞赛时间线</h1>
+                    <p class="intro">从校级到国际级，每一步都值得被铭记。</p>
+                </div>
+            </section>
+            <section class="timeline-section" style="padding-top:0;">
+                <div class="timeline">
+                    <div class="timeline-group">
+                        <div class="timeline-year"><span>2025</span></div>
+                        <div class="timeline-item animate-in delay-2">
+                            <div class="timeline-dot" style="background:#6b5a9a;box-shadow:0 0 0 2px #6b5a9a;"></div>
+                            <div class="timeline-card">
+                                <span class="card-level" style="background:rgba(91,74,138,0.15);color:#3d3170;">省级</span>
+                                <h3 style="margin-top:8px;font-size:18px;font-weight:800;">贵州省青少年机器人竞赛一等奖</h3>
+                                <div style="display:flex;gap:12px;font-size:13px;color:var(--muted);margin-top:8px;">
+                                    <span style="font-weight:700;color:var(--green-2);">林知远</span>
+                                    <span>机器人与自动控制社</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-item animate-in delay-3">
+                            <div class="timeline-dot" style="background:#c9a04e;box-shadow:0 0 0 2px #c9a04e;"></div>
+                            <div class="timeline-card">
+                                <span class="card-level" style="background:rgba(201,160,78,0.15);color:#8a6c20;">全国</span>
+                                <h3 style="margin-top:8px;font-size:18px;font-weight:800;">全国青少年信息学活动省级二等奖</h3>
+                                <div style="display:flex;gap:12px;font-size:13px;color:var(--muted);margin-top:8px;">
+                                    <span style="font-weight:700;color:var(--green-2);">陈亦航</span>
+                                    <span>人工智能与程序设计社</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="timeline-group">
+                        <div class="timeline-year"><span>2024</span></div>
+                        <div class="timeline-item animate-in delay-4">
+                            <div class="timeline-dot" style="background:#b08a5c;box-shadow:0 0 0 2px #b08a5c;"></div>
+                            <div class="timeline-card">
+                                <span class="card-level" style="background:rgba(176,138,92,0.15);color:#6b4d28;">市级</span>
+                                <h3 style="margin-top:8px;font-size:18px;font-weight:800;">贵阳市创客马拉松最佳工程奖</h3>
+                                <div style="display:flex;gap:12px;font-size:13px;color:var(--muted);margin-top:8px;">
+                                    <span style="font-weight:700;color:var(--green-2);">林知远</span>
+                                    <span>机器人与自动控制社</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div>
+            <strong>贵阳市第二中学科技先锋队</strong>
+            <span>在实践中探索，在荣誉墙上记录成长。</span>
+        </div>
+    </footer>
+
+    <!-- ═══ 粒子系统 ═══ -->
+    <script>
+    (function () {
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        const COLORS = {
+            particle: 'rgba(24, 77, 71, 0.18)',
+            particleNear: 'rgba(240, 180, 60, 0.28)',
+            line: 'rgba(24, 77, 71, ',
+            lineNear: 'rgba(240, 180, 60, ',
+        };
+        const CONFIG = { particleCount: 240, maxVelocity: 0.45, lineDistance: 120, mouseRadius: 180 };
+        let particles = [];
+        let mouse = { x: null, y: null, targetX: null, targetY: null };
+        let running = true;
+
+        function resize() {
+            canvas.width = window.innerWidth * window.devicePixelRatio;
+            canvas.height = window.innerHeight * window.devicePixelRatio;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            if (window.innerWidth < 768) { CONFIG.particleCount = 90; CONFIG.lineDistance = 80; }
+            else { CONFIG.particleCount = 240; CONFIG.lineDistance = 120; }
+        }
+
+        class Particle {
+            constructor(w, h) {
+                this.x = Math.random() * w; this.y = Math.random() * h;
+                this.vx = (Math.random() - 0.5) * CONFIG.maxVelocity;
+                this.vy = (Math.random() - 0.5) * CONFIG.maxVelocity;
+                this.radius = Math.random() * 1.6 + 0.8;
+                this.baseRadius = this.radius; this.nearMouse = false;
+            }
+            update(w, h) {
+                if (this.x < 0 || this.x > w) this.vx *= -1;
+                if (this.y < 0 || this.y > h) this.vy *= -1;
+                this.x += this.vx; this.y += this.vy; this.nearMouse = false;
+                if (mouse.x !== null) {
+                    const dx = this.x - mouse.x, dy = this.y - mouse.y, dist = Math.hypot(dx, dy);
+                    if (dist < CONFIG.mouseRadius) {
+                        this.nearMouse = true;
+                        const force = (CONFIG.mouseRadius - dist) / CONFIG.mouseRadius;
+                        this.x += (dx / dist) * force * 1.6;
+                        this.y += (dy / dist) * force * 1.6;
+                        this.radius = this.baseRadius + force * 1.2;
+                    } else if (this.radius > this.baseRadius) { this.radius -= 0.08; }
+                }
+            }
+            draw(ctx) { ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = COLORS.particle; ctx.fill(); }
+        }
+
+        function init() {
+            particles = [];
+            const w = window.innerWidth, h = window.innerHeight;
+            for (let i = 0; i < CONFIG.particleCount; i++) particles.push(new Particle(w, h));
+        }
+
+        function animate() {
+            if (!running) { requestAnimationFrame(animate); return; }
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            if (mouse.targetX !== null) { mouse.x += (mouse.targetX - mouse.x) * 0.08; mouse.y += (mouse.targetY - mouse.y) * 0.08; }
+            const w = window.innerWidth, h = window.innerHeight;
+            particles.forEach(p => { p.update(w, h); p.draw(ctx); });
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p1 = particles[i], p2 = particles[j];
+                    const dx = p1.x - p2.x, dy = p1.y - p2.y, dist = Math.hypot(dx, dy);
+                    if (dist < CONFIG.lineDistance) {
+                        const nearMouse = p1.nearMouse || p2.nearMouse;
+                        const baseAlpha = (1 - dist / CONFIG.lineDistance) * (nearMouse ? 0.14 : 0.08);
+                        const colorSet = nearMouse ? COLORS.lineNear : COLORS.line;
+                        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `${colorSet}${baseAlpha.toFixed(3)})`;
+                        ctx.lineWidth = nearMouse ? 0.7 : 0.4; ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // 页面不可见时暂停渲染
+        document.addEventListener('visibilitychange', () => { running = !document.hidden; });
+
+        window.addEventListener('resize', () => { resize(); init(); });
+        window.addEventListener('mousemove', (e) => { mouse.targetX = e.clientX; mouse.targetY = e.clientY; });
+        window.addEventListener('mouseleave', () => { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+        window.addEventListener('touchmove', (e) => { if (e.touches.length > 0) { mouse.targetX = e.touches[0].clientX; mouse.targetY = e.touches[0].clientY; } }, { passive: true });
+        window.addEventListener('touchend', () => { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+
+        resize(); init(); animate();
+    })();
+    </script>
+
+    <!-- ═══ 导航滚动阴影 ═══ -->
+    <script>
+    (function () {
+        var header = document.getElementById('siteHeader');
+        window.addEventListener('scroll', function () {
+            header.classList.toggle('scrolled', window.scrollY > 10);
+        }, { passive: true });
+    })();
+    </script>
+
+    <!-- ═══ 页面切换动画 — 无遮罩淡入淡出 ═══ -->
+    <script>
+    (function () {
+        var navLinks = document.querySelectorAll('.site-nav a[data-page]');
+        var currentPage = 'home';
+        var transitioning = false;
+
+        // 重新触发 animate-in 动画
+        function rebindAnimations(container) {
+            var els = container.querySelectorAll('.animate-in');
+            els.forEach(function (el) {
+                var cls = el.className;
+                el.classList.remove('animate-in');
+                void el.offsetWidth;
+                el.className = cls;
+            });
+        }
+
+        function navigateTo(pageKey, navLink) {
+            if (transitioning || currentPage === pageKey) return;
+            transitioning = true;
+
+            var oldPage = document.getElementById('page-' + currentPage);
+            var newPage = document.getElementById('page-' + pageKey);
+            if (!newPage) { transitioning = false; return; }
+
+            // 更新导航 active
+            navLinks.forEach(function (a) {
+                a.classList.remove('active');
+                a.removeAttribute('aria-current');
+            });
+            if (navLink) {
+                navLink.classList.add('active');
+                navLink.setAttribute('aria-current', 'page');
+            }
+
+            // 步骤1：旧内容退场
+            if (oldPage) {
+                oldPage.classList.add('exiting');
+                oldPage.addEventListener('animationend', function exitHandler() {
+                    oldPage.removeEventListener('animationend', exitHandler);
+                    oldPage.classList.remove('exiting', 'active');
+
+                    // 步骤2：instant 替换内容
+                    newPage.classList.add('active');
+                    rebindAnimations(newPage);
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+
+                    // 步骤3：新内容入场
+                    requestAnimationFrame(function () {
+                        newPage.classList.add('entering');
+                        newPage.addEventListener('animationend', function enterHandler() {
+                            newPage.removeEventListener('animationend', enterHandler);
+                            newPage.classList.remove('entering');
+                            currentPage = pageKey;
+                            transitioning = false;
+                        });
+                    });
+                });
+            } else {
+                // 首次加载，直接显示
+                newPage.classList.add('active');
+                rebindAnimations(newPage);
+                currentPage = pageKey;
+                newPage.classList.add('entering');
+                newPage.addEventListener('animationend', function enterHandler() {
+                    newPage.removeEventListener('animationend', enterHandler);
+                    newPage.classList.remove('entering');
+                    transitioning = false;
+                });
+            }
+        }
+
+        // 拦截所有 data-page 链接
+        document.querySelectorAll('a[data-page]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var pageKey = link.getAttribute('data-page');
+                var navLink = null;
+                navLinks.forEach(function (a) {
+                    if (a.getAttribute('data-page') === pageKey) navLink = a;
+                });
+                navigateTo(pageKey, navLink || link);
+            });
+        });
+
+        // 首次入场动画
+        var homePage = document.getElementById('page-home');
+        if (homePage) {
+            homePage.classList.add('entering');
+            homePage.addEventListener('animationend', function h() {
+                homePage.removeEventListener('animationend', h);
+                homePage.classList.remove('entering');
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

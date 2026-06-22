@@ -1,0 +1,35 @@
+<% const members = site.data.members || []; %>
+<section class="page-hero animate-in delay-1">
+  <p class="eyebrow">Team Members</p>
+  <h1>成员荣誉墙</h1>
+  <p>每一张卡片都是一个独立主页，记录队员参与的项目、竞赛经历与代表性获奖。</p>
+</section>
+
+<section class="section">
+  <% if (members.length) { %>
+  <div class="member-grid">
+    <% members.forEach((member, idx) => { %>
+      <a class="member-card animate-in delay-<%= Math.min(idx + 1, 5) %>" href="<%- url_for('/members/' + member.slug + '/') %>">
+        <img class="member-avatar" src="<%- url_for(member.avatar) %>" alt="<%= member.name %>头像" loading="lazy" decoding="async">
+        <div class="member-content">
+          <p class="member-role"><%= member.role %> · <%= member.grade %></p>
+          <h3><%= member.name %></h3>
+          <p class="member-summary"><%= member.summary %></p>
+          <ul class="honor-list compact">
+            <% (member.honors || []).slice(0, 3).forEach((honor) => { %>
+              <li><%= honor %></li>
+            <% }) %>
+          </ul>
+          <span class="text-link">查看完整记录</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+  <% } else { %>
+  <div class="empty-state">
+    <h2>暂无成员</h2>
+    <p>待队员信息录入后在此展示。</p>
+  </div>
+  <% } %>
+</section>
+<%- js('js/members-editor') %>

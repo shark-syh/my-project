@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞赛时间线编辑器 — Demo</title>
+    <style>
+        :root {
+            --ink: #17211f;
+            --muted: #5f6f68;
+            --line: #d8dfd8;
+            --paper: #fbfcf8;
+            --soft: #eef4ed;
+            --green: #184d47;
+            --green-2: #26766b;
+            --gold: #f0b43c;
+            --red: #b53b31;
+            --white: #ffffff;
+            --shadow-sm: 0 8px 24px rgba(23, 33, 31, 0.06);
+            --shadow: 0 18px 45px rgba(23, 33, 31, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Inter", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.65;
+            min-height: 100vh;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        header, main, footer { position: relative; z-index: 1; }
+
+        /* ── 导航栏 ── */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 72px;
+            padding: 12px clamp(20px, 5vw, 64px);
+            border-bottom: 1px solid rgba(216, 223, 216, 0.9);
+            background: rgba(251, 252, 248, 0.85);
+            backdrop-filter: blur(16px);
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 20px;
+        }
+        .site-nav { display: flex; gap: 8px; align-items: center; }
+        .site-nav a {
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .site-nav a:hover { background: var(--soft); color: var(--green); }
+        .site-nav a.active { color: var(--green); background: var(--soft); }
+
+        /* ── 管理员模拟开关 ── */
+        .admin-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: var(--soft);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        .admin-toggle-row input { cursor: pointer; }
+        .admin-indicator {
+            display: none;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+        .admin-toggle-row input:checked ~ .admin-indicator { display: inline-block; }
+
+        /* ── Hero ── */
+        .page-hero {
+            padding: clamp(48px, 8vw, 80px) clamp(20px, 6vw, 84px) clamp(32px, 5vw, 56px);
+            text-align: center;
+            background: rgba(238, 244, 237, 0.72);
+            border-bottom: 1px solid var(--line);
+            position: relative;
+        }
+        .page-hero h1 { font-size: clamp(36px, 6vw, 60px); letter-spacing: 0.02em; }
+        .page-hero .sub {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 17px;
+        }
+        .timeline-add-btn {
+            display: none;
+            position: absolute;
+            right: clamp(20px, 6vw, 84px);
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 10px 22px;
+            border-radius: 24px;
+            background: var(--green);
+            color: var(--white);
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 180ms ease, transform 180ms ease;
+        }
+        .timeline-add-btn:hover { background: var(--green-2); transform: translateY(-50%) scale(1.04); }
+        .timeline-add-btn.show { display: inline-flex; align-items: center; gap: 6px; }
+
+        /* ── 时间线 ── */
+        .timeline-section {
+            padding: clamp(40px, 6vw, 72px) clamp(20px, 6vw, 84px);
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .timeline { position: relative; }
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 100px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--line);
+        }
+
+        .timeline-group { margin-bottom: 48px; }
+
+        .timeline-year {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-left: 100px;
+        }
+        .timeline-year span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 32px;
+            border-radius: 16px;
+            background: var(--green);
+            color: var(--white);
+            font-size: 14px;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 2;
+        }
+        .timeline-year::before {
+            content: "";
+            position: absolute;
+            left: 99px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--green);
+            z-index: 2;
+        }
+
+        .timeline-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-left: 100px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 95px;
+            top: 16px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #a0ada6;
+            border: 2px solid var(--white);
+            box-shadow: 0 0 0 2px #a0ada6;
+            z-index: 2;
+            transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+        .timeline-item:hover .timeline-dot {
+            transform: scale(1.4);
+            box-shadow: 0 0 0 5px rgba(160, 173, 166, 0.4);
+        }
+        .timeline-item.dot-school .timeline-dot {
+            background: #8a9a90; box-shadow: 0 0 0 2px #8a9a90;
+        }
+        .timeline-item.dot-school:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(138, 154, 144, 0.4);
+        }
+        .timeline-item.dot-city .timeline-dot {
+            background: #c0712e; box-shadow: 0 0 0 2px #c0712e;
+        }
+        .timeline-item.dot-city:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(192, 113, 46, 0.4);
+        }
+        .timeline-item.dot-provincial .timeline-dot {
+            background: #6b5a9a; box-shadow: 0 0 0 2px #6b5a9a;
+        }
+        .timeline-item.dot-provincial:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(107, 90, 154, 0.4);
+        }
+        .timeline-item.dot-national .timeline-dot {
+            background: #cc9900; box-shadow: 0 0 0 2px #cc9900;
+        }
+        .timeline-item.dot-national:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(204, 153, 0, 0.45);
+        }
+        .timeline-item.dot-international .timeline-dot {
+            background: #c03030; box-shadow: 0 0 0 2px #c03030;
+        }
+        .timeline-item.dot-international:hover .timeline-dot {
+            box-shadow: 0 0 0 5px rgba(192, 48, 48, 0.4);
+        }
+
+        /* 卡片 */
+        .timeline-card {
+            flex: 1;
+            min-width: 0;
+            padding: 18px 22px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow-sm);
+            transition: transform 180ms ease, box-shadow 180ms ease;
+            position: relative;
+        }
+        .timeline-item:hover .timeline-card {
+            transform: translateX(6px);
+            box-shadow: 0 12px 32px rgba(23, 33, 31, 0.1);
+        }
+
+        .timeline-card .card-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .timeline-card h3 {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0 0 8px;
+            line-height: 1.3;
+            padding-right: 60px;
+        }
+        .timeline-card .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .timeline-card .card-member {
+            font-weight: 700;
+            color: var(--green-2);
+        }
+        .timeline-card .card-level {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+        }
+        .card-level.school { background: rgba(95, 111, 104, 0.18); color: #4a5a51; }
+        .card-level.city { background: rgba(192, 113, 46, 0.16); color: #8b5018; }
+        .card-level.provincial { background: rgba(91, 74, 138, 0.15); color: #3d3170; }
+        .card-level.national { background: rgba(184, 134, 11, 0.18); color: #8b6914; }
+        .card-level.international { background: rgba(162, 32, 32, 0.13); color: #8b1a1a; }
+
+        .timeline-card .card-manual-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(240, 180, 60, 0.2);
+            color: #8b6914;
+        }
+
+        /* 卡片操作按钮 */
+        .timeline-card-actions {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            gap: 4px;
+        }
+        .timeline-card-actions.show { display: flex; }
+
+        .timeline-card-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid var(--line);
+            background: var(--white);
+            color: var(--muted);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 150ms ease, color 150ms ease;
+        }
+        .timeline-card-action-btn:hover { background: var(--soft); color: var(--ink); }
+        .timeline-card-action-btn.delete:hover { background: #fce4e4; color: var(--red); border-color: #f5c6c6; }
+
+        /* 编辑浮层 */
+        .editor-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 33, 31, 0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .editor-overlay.active { display: flex; }
+
+        .editor-panel {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 28px 30px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: var(--shadow);
+        }
+        .editor-panel h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--ink);
+        }
+        .editor-form-field {
+            margin-bottom: 14px;
+        }
+        .editor-form-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .editor-form-field input,
+        .editor-form-field select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            background: var(--paper);
+            color: var(--ink);
+            outline: none;
+            transition: border-color 180ms ease;
+        }
+        .editor-form-field input:focus,
+        .editor-form-field select:focus {
+            border-color: var(--green-2);
+            box-shadow: 0 0 0 3px rgba(38, 118, 107, 0.12);
+        }
+        .editor-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .editor-btn {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 180ms ease;
+        }
+        .editor-btn-primary {
+            background: var(--green);
+            color: var(--white);
+        }
+        .editor-btn-primary:hover { background: var(--green-2); }
+        .editor-btn-cancel {
+            background: var(--soft);
+            color: var(--muted);
+        }
+        .editor-btn-cancel:hover { background: var(--line); }
+
+        /* ── 底栏 ── */
+        .site-footer {
+            position: relative;
+            z-index: 1;
+            padding: 28px clamp(20px, 6vw, 84px);
+            border-top: 1px solid var(--line);
+            background: #17211f;
+            color: rgba(255, 255, 255, 0.78);
+        }
+        .site-footer strong { color: var(--white); }
+
+        /* ── 响应式 ── */
+        @media (max-width: 720px) {
+            .timeline::before { left: 28px; }
+            .timeline-year { padding-left: 56px; }
+            .timeline-year::before { left: 23px; }
+            .timeline-item { padding-left: 56px; }
+            .timeline-dot { left: 22px; }
+            .timeline-card .card-meta { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .timeline-add-btn {
+                position: static;
+                transform: none;
+                margin-top: 16px;
+            }
+            .timeline-add-btn.show { display: flex; }
+            .timeline-card h3 { padding-right: 0; }
+            .timeline-card-actions { top: auto; bottom: 10px; right: 12px; }
+        }
+        @media (max-width: 480px) {
+            .site-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .timeline-card h3 { font-size: 16px; }
+            .timeline-card-actions { position: static; margin-top: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <header class="site-header">
+        <div class="brand">
+            <div class="brand-mark">技</div>
+            <span>贵阳二中科技先锋队</span>
+        </div>
+        <nav class="site-nav">
+            <a href="#">首页</a>
+            <a href="#">成员荣誉墙</a>
+            <a href="#">照片墙</a>
+            <a href="#" class="active">竞赛时间线</a>
+            <label class="admin-toggle-row" title="模拟管理员登录状态">
+                <input type="checkbox" id="adminToggle" onchange="onAdminToggle()">
+                <span>管理员</span>
+                <span class="admin-indicator"></span>
+            </label>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <h1>竞赛时间线</h1>
+            <p class="sub">记录每一段探索的足迹，见证每一次成长的跃迁</p>
+            <button class="timeline-add-btn" id="addBtn" onclick="showEditor()">+ 添加比赛</button>
+        </section>
+
+        <section class="timeline-section">
+            <div class="timeline" id="timelineRoot"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div>
+            <strong>贵阳市第二中学科技先锋队</strong>
+            <span>在实践中探索，在荣誉墙上记录成长。</span>
+        </div>
+    </footer>
+
+    <!-- ═══ 编辑浮层 ═══ -->
+    <div class="editor-overlay" id="editorOverlay">
+        <div class="editor-panel">
+            <h3 id="editorTitle">添加比赛</h3>
+            <div class="editor-form-field">
+                <label for="editYear">年份</label>
+                <input type="number" id="editYear" min="2000" max="2099" placeholder="例如 2025">
+            </div>
+            <div class="editor-form-field">
+                <label for="editLevel">级别</label>
+                <select id="editLevel">
+                    <option value="school">校级</option>
+                    <option value="city">市级</option>
+                    <option value="provincial">省级</option>
+                    <option value="national">国家级</option>
+                    <option value="international">国际级</option>
+                </select>
+            </div>
+            <div class="editor-form-field">
+                <label for="editTitle">比赛名称</label>
+                <input type="text" id="editTitle" placeholder="例如 全国青少年科技创新大赛">
+            </div>
+            <div class="editor-btns">
+                <button class="editor-btn editor-btn-cancel" onclick="hideEditor()">取消</button>
+                <button class="editor-btn editor-btn-primary" id="saveBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ 核心逻辑 ═══ -->
+    <script>
+    (function () {
+        // ── 模拟成员数据（从 members.yml 导入）──
+        var MEMBERS = [
+            { name: "林知远", role: "机器人与自动控制社", honors: [
+                "2025 年贵州省青少年机器人竞赛一等奖",
+                "2024 年贵阳市创客马拉松最佳工程奖",
+                "2024 年校级科技节智能车挑战赛冠军"
+            ]},
+            { name: "陈亦航", role: "人工智能与程序设计社", honors: [
+                "2025 年全国青少年信息学活动省级二等奖",
+                "2024 年贵阳市中学生编程挑战赛一等奖",
+                "2024 年校级算法训练营优秀队员"
+            ]},
+            { name: "许清岚", role: "航模与工程设计社", honors: [
+                "2025 年贵州省航空航天模型竞赛二等奖",
+                "2024 年贵阳市青少年科技创新大赛工程类一等奖",
+                "2024 年校级创意结构赛最佳设计奖"
+            ]}
+        ];
+
+        // ── 手动条目（模拟 timeline-manual.yml）──
+        var manualEntries = [
+            { id: "20250701-a1b", year: 2025, level: "national", label: "国家级", title: "全国中小学信息技术创新与实践大赛（团队参赛）" },
+            { id: "20240615-c2d", year: 2024, level: "city", label: "市级", title: "贵阳二中校园科技节成果展示赛" }
+        ];
+
+        // ── 级别规则 ──
+        var LEVEL_RULES = [
+            { level: "international", label: "国际级", re: /国际|全球|世界/ },
+            { level: "national",      label: "国家级", re: /全国/ },
+            { level: "provincial",    label: "省级",   re: /省/ },
+            { level: "city",          label: "市级",   re: /市/ },
+            { level: "school",        label: "校级",   re: /校/ }
+        ];
+
+        var LEVEL_ORDER = { international: 0, national: 1, provincial: 2, city: 3, school: 4 };
+        var LEVEL_LABELS = {
+            school: "校级", city: "市级", provincial: "省级", national: "国家级", international: "国际级"
+        };
+
+        var editingId = null; // 正在编辑的条目 id，null 表示添加模式
+        var isAdmin = false;
+
+        function parseHonor(text) {
+            var yearMatch = text.match(/^(\d{4})\s*年/);
+            var year = yearMatch ? parseInt(yearMatch[1]) : null;
+            var level = "school";
+            var label = "校级";
+            for (var i = 0; i < LEVEL_RULES.length; i++) {
+                if (LEVEL_RULES[i].re.test(text)) {
+                    level = LEVEL_RULES[i].level;
+                    label = LEVEL_RULES[i].label;
+                    break;
+                }
+            }
+            var title = text.replace(/^\d{4}\s*年\s*/, "");
+            return { year: year, level: level, label: label, title: title };
+        }
+
+        function escapeHTML(str) {
+            var div = document.createElement("div");
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function buildEvents() {
+            var events = [];
+
+            // 自动条目
+            MEMBERS.forEach(function (m) {
+                m.honors.forEach(function (h) {
+                    var p = parseHonor(h);
+                    events.push({
+                        year: p.year, level: p.level, label: p.label,
+                        title: p.title, member: m.name, role: m.role,
+                        manual: false
+                    });
+                });
+            });
+
+            // 手动条目
+            manualEntries.forEach(function (e) {
+                events.push({
+                    year: e.year, level: e.level, label: e.label,
+                    title: e.title, member: "", role: "",
+                    manual: true, id: e.id
+                });
+            });
+
+            // 排序
+            events.sort(function (a, b) {
+                if (a.year !== b.year) return (b.year || 0) - (a.year || 0);
+                return (LEVEL_ORDER[a.level] || 5) - (LEVEL_ORDER[b.level] || 5);
+            });
+
+            return events;
+        }
+
+        function render() {
+            var events = buildEvents();
+
+            // 分组
+            var groups = {};
+            events.forEach(function (ev) {
+                var key = ev.year ? String(ev.year) : "更早";
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(ev);
+            });
+
+            var years = Object.keys(groups).sort(function (a, b) {
+                if (a === "更早") return 1;
+                if (b === "更早") return -1;
+                return parseInt(b) - parseInt(a);
+            });
+
+            var html = "";
+            years.forEach(function (year) {
+                html += '<div class="timeline-group">';
+                html += '<div class="timeline-year"><span>' + year + '</span></div>';
+
+                groups[year].forEach(function (ev) {
+                    html += '<div class="timeline-item dot-' + ev.level + '"' +
+                            (ev.manual ? ' data-manual-id="' + escapeHTML(ev.id) + '"' : '') + '>';
+                    html += '<div class="timeline-dot"></div>';
+                    html += '<div class="timeline-card">';
+
+                    // 管理员操作按钮
+                    html += '<div class="timeline-card-actions' + (isAdmin && ev.manual ? ' show' : '') + '">';
+                    html += '<button class="timeline-card-action-btn" title="编辑" onclick="editEntry(\'' + escapeHTML(ev.id) + '\')">&#9998;</button>';
+                    html += '<button class="timeline-card-action-btn delete" title="删除" onclick="deleteEntry(\'' + escapeHTML(ev.id) + '\')">&#10005;</button>';
+                    html += '</div>';
+
+                    html += '<div class="card-date">' + year + '</div>';
+                    html += '<h3>' + escapeHTML(ev.title) + '</h3>';
+                    html += '<div class="card-meta">';
+                    if (ev.member) {
+                        html += '<span class="card-member">' + escapeHTML(ev.member) + '</span>';
+                        html += '<span>' + escapeHTML(ev.role) + '</span>';
+                    } else {
+                        html += '<span class="card-manual-badge">手动添加</span>';
+                    }
+                    html += '<span class="card-level ' + ev.level + '">' + ev.label + '</span>';
+                    html += '</div>';
+                    html += '</div>';
+                    html += '</div>';
+                });
+
+                html += '</div>';
+            });
+
+            document.getElementById("timelineRoot").innerHTML = html;
+        }
+
+        // ── 管理员状态 ──
+        window.onAdminToggle = function () {
+            isAdmin = document.getElementById("adminToggle").checked;
+            var addBtn = document.getElementById("addBtn");
+            if (isAdmin) {
+                addBtn.classList.add("show");
+            } else {
+                addBtn.classList.remove("show");
+            }
+            render();
+        };
+
+        // ── 编辑器 ──
+        function showEditor(id) {
+            var overlay = document.getElementById("editorOverlay");
+            var titleEl = document.getElementById("editorTitle");
+            var saveBtn = document.getElementById("saveBtn");
+
+            if (id) {
+                // 编辑模式
+                var entry = null;
+                for (var i = 0; i < manualEntries.length; i++) {
+                    if (manualEntries[i].id === id) { entry = manualEntries[i]; break; }
+                }
+                if (!entry) return;
+                editingId = id;
+                titleEl.textContent = "编辑比赛";
+                saveBtn.textContent = "保存修改";
+                document.getElementById("editYear").value = entry.year;
+                document.getElementById("editLevel").value = entry.level;
+                document.getElementById("editTitle").value = entry.title;
+            } else {
+                // 添加模式
+                editingId = null;
+                titleEl.textContent = "添加比赛";
+                saveBtn.textContent = "添加";
+                document.getElementById("editYear").value = new Date().getFullYear();
+                document.getElementById("editLevel").value = "city";
+                document.getElementById("editTitle").value = "";
+            }
+
+            saveBtn.onclick = saveEntry;
+            overlay.classList.add("active");
+            setTimeout(function () { document.getElementById("editTitle").focus(); }, 100);
+
+            // 点击遮罩关闭
+            overlay.onmousedown = function (e) {
+                if (e.target === overlay) hideEditor();
+            };
+        }
+
+        window.showEditor = function () { showEditor(null); };
+
+        function hideEditor() {
+            document.getElementById("editorOverlay").classList.remove("active");
+        }
+
+        window.editEntry = function (id) { showEditor(id); };
+
+        window.hideEditor = hideEditor;
+
+        function saveEntry() {
+            var year = parseInt(document.getElementById("editYear").value);
+            var level = document.getElementById("editLevel").value;
+            var title = document.getElementById("editTitle").value.trim();
+
+            if (!year || year < 2000 || year > 2099) { alert("请输入有效的年份 (2000-2099)"); return; }
+            if (!title) { alert("请输入比赛名称"); return; }
+
+            var label = LEVEL_LABELS[level] || level;
+
+            if (editingId) {
+                // 更新
+                for (var i = 0; i < manualEntries.length; i++) {
+                    if (manualEntries[i].id === editingId) {
+                        manualEntries[i].year = year;
+                        manualEntries[i].level = level;
+                        manualEntries[i].label = label;
+                        manualEntries[i].title = title;
+                        break;
+                    }
+                }
+            } else {
+                // 新增
+                var now = new Date();
+                var id = String(now.getFullYear()) +
+                    String(now.getMonth() + 1).padStart(2, "0") +
+                    String(now.getDate()).padStart(2, "0") + "-" +
+                    Math.random().toString(36).slice(2, 5);
+                manualEntries.push({ id: id, year: year, level: level, label: label, title: title });
+            }
+
+            hideEditor();
+            render();
+        }
+
+        window.deleteEntry = function (id) {
+            if (!confirm("确定删除这条手动添加的比赛记录？")) return;
+            manualEntries = manualEntries.filter(function (e) { return e.id !== id; });
+            render();
+        };
+
+        // ── 初始化 ──
+        document.getElementById("adminToggle").checked = false;
+        isAdmin = false;
+        render();
+    })();
+    </script>
+
+    <!-- ═══ 粒子系统 ═══ -->
+    <script>
+    (function () {
+        var canvas = document.getElementById('particleCanvas');
+        var ctx = canvas.getContext('2d');
+        var COLORS = { particle: 'rgba(24, 77, 71, 0.18)', particleNear: 'rgba(240, 180, 60, 0.28)', line: 'rgba(24, 77, 71, ', lineNear: 'rgba(240, 180, 60, ' };
+        var CONFIG = { particleCount: 240, maxVelocity: 0.45, lineDistance: 120, mouseRadius: 180 };
+        var particles = [];
+        var mouse = { x: null, y: null, targetX: null, targetY: null, radius: CONFIG.mouseRadius };
+
+        function resize() {
+            canvas.width = window.innerWidth * window.devicePixelRatio;
+            canvas.height = window.innerHeight * window.devicePixelRatio;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            if (window.innerWidth < 768) { CONFIG.particleCount = 90; CONFIG.lineDistance = 80; mouse.radius = 140; }
+            else { CONFIG.particleCount = 240; CONFIG.lineDistance = 120; mouse.radius = CONFIG.mouseRadius; }
+        }
+
+        function Particle(w, h) {
+            this.x = Math.random() * w; this.y = Math.random() * h;
+            this.vx = (Math.random() - 0.5) * CONFIG.maxVelocity;
+            this.vy = (Math.random() - 0.5) * CONFIG.maxVelocity;
+            this.radius = Math.random() * 1.6 + 0.8; this.baseRadius = this.radius; this.nearMouse = false;
+        }
+        Particle.prototype.update = function (w, h) {
+            if (this.x < 0 || this.x > w) this.vx *= -1;
+            if (this.y < 0 || this.y > h) this.vy *= -1;
+            this.x += this.vx; this.y += this.vy; this.nearMouse = false;
+            if (mouse.x !== null) {
+                var dx = this.x - mouse.x, dy = this.y - mouse.y, dist = Math.hypot(dx, dy);
+                if (dist < mouse.radius) {
+                    this.nearMouse = true;
+                    var force = (mouse.radius - dist) / mouse.radius;
+                    this.x += (dx / dist) * force * 1.6;
+                    this.y += (dy / dist) * force * 1.6;
+                    this.radius = this.baseRadius + force * 1.2;
+                } else if (this.radius > this.baseRadius) { this.radius -= 0.08; }
+            }
+        };
+        Particle.prototype.draw = function (ctx) {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = COLORS.particle; ctx.fill();
+        };
+
+        function init() {
+            particles = [];
+            var w = window.innerWidth, h = window.innerHeight;
+            for (var i = 0; i < CONFIG.particleCount; i++) particles.push(new Particle(w, h));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            if (mouse.targetX !== null) { mouse.x += (mouse.targetX - mouse.x) * 0.08; mouse.y += (mouse.targetY - mouse.y) * 0.08; }
+            var w = window.innerWidth, h = window.innerHeight;
+            particles.forEach(function (p) { p.update(w, h); p.draw(ctx); });
+            for (var i = 0; i < particles.length; i++) {
+                for (var j = i + 1; j < particles.length; j++) {
+                    var p1 = particles[i], p2 = particles[j];
+                    var dx = p1.x - p2.x, dy = p1.y - p2.y, dist = Math.hypot(dx, dy);
+                    if (dist < CONFIG.lineDistance) {
+                        var nearMouse = p1.nearMouse || p2.nearMouse;
+                        var baseAlpha = (1 - dist / CONFIG.lineDistance) * (nearMouse ? 0.14 : 0.08);
+                        var colorSet = nearMouse ? COLORS.lineNear : COLORS.line;
+                        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = colorSet + baseAlpha.toFixed(3) + ')';
+                        ctx.lineWidth = nearMouse ? 0.7 : 0.4; ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', function () { resize(); init(); });
+        window.addEventListener('mousemove', function (e) { mouse.targetX = e.clientX; mouse.targetY = e.clientY; });
+        window.addEventListener('mouseleave', function () { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+        window.addEventListener('touchmove', function (e) { if (e.touches.length > 0) { mouse.targetX = e.touches[0].clientX; mouse.targetY = e.touches[0].clientY; } }, { passive: true });
+        window.addEventListener('touchend', function () { mouse.x = mouse.y = mouse.targetX = mouse.targetY = null; });
+
+        resize(); init(); animate();
+    })();
+    </script>
+</body>
+</html>
